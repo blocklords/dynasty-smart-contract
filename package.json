@@ -1,0 +1,14 @@
+{
+  "name": "blocklords-dynasty-smartcontracts",
+  "version": "1.0.0",
+  "description": "Security infrastructure for Truffle DApps",
+  "main": "truffle.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.1",
+    "@truffle/hdwallet-provider": "^2.1.15",
+    "dotenv": "^16.4.5"
+  }
+}
