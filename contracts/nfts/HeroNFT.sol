@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.25;
+pragma solidity 0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
@@ -35,7 +35,7 @@ contract HeroNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
             bytes32 hash            = keccak256(abi.encodePacked(prefix, message));
             address recover         = ecrecover(hash, _v, _r, _s);
 
-            require(recover == verifier, "Verification failed about mint house nft");
+            require(recover == verifier, "Verification failed about mint hero nft");
         }
 
         _safeMint(_to, _tokenId);
