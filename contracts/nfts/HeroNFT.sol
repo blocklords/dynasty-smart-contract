@@ -31,7 +31,7 @@ contract HeroNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
         
         {
             bytes memory prefix     = "\x19Ethereum Signed Message:\n32";
-            bytes32 message         = keccak256(abi.encodePacked(_to, _tokenId, address(this), msg.sender, nonce[msg.sender]));
+            bytes32 message         = keccak256(abi.encodePacked(_to, _tokenId, address(this), nonce[_to]));
             bytes32 hash            = keccak256(abi.encodePacked(prefix, message));
             address recover         = ecrecover(hash, _v, _r, _s);
 
@@ -39,7 +39,7 @@ contract HeroNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
         }
 
         _safeMint(_to, _tokenId);
-        nonce[msg.sender]++;
+        nonce[_to]++;
         
         emit Minted(_to, _tokenId, block.timestamp);
         return _tokenId;
