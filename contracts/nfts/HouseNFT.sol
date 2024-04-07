@@ -55,14 +55,8 @@ contract HouseNFT is ERC721Enumerable, Ownable {
 
         require(flagShape > 0 && flagColor > 0 && houseSymbol > 0 &&  bytes(houseName).length > 0, "house params err");
       
-        {
-            bytes memory prefix     = "\x19Ethereum Signed Message:\n32";
-            bytes32 message         = keccak256(abi.encodePacked(nonce[_to], _to, _data, address(this)));
-            bytes32 hash            = keccak256(abi.encodePacked(prefix, message));
-            address recover         = ecrecover(hash, _v, _r, _s);
-
-            require(recover == verifier, "Verification failed about mint house nft");
-        }
+        address recover = verifySignature(_to, _data, _v, _r, _s);
+        require(recover == verifier, "verification failed about mint house nft");
         
         _safeMint(_to, tokenId);
 
@@ -82,34 +76,35 @@ contract HouseNFT is ERC721Enumerable, Ownable {
         return tokenId;
     }
 
-    function setHouse (uint256 _houseId, bytes calldata _data, uint8 _v, bytes32 _r, bytes32 _s) external {
-        require(IERC721(address(this)).ownerOf(_houseId) == msg.sender, "not house nft owner");
+    function setHouse (address _from, bytes calldata _data, uint8 _v, bytes32 _r, bytes32 _s) external {
+        (uint256 flagShape, uint256 houseSymbol, uint256 flagColor, string memory houseName, uint256 lordNftId, uint256 houseId) 
+            = abi.decode(_data, (uint256, uint256, uint256, string, uint256, uint256));
 
-        (uint256 flagShape, uint256 houseSymbol, uint256 flagColor, string memory houseName, uint256 lordNftId) 
-            = abi.decode(_data, (uint256, uint256, uint256, string, uint256));
-
-        require(IERC721(heroNft).ownerOf(lordNftId) == msg.sender, "not hero nft owner");
+        require(IERC721(address(this)).ownerOf(houseId) == _from, "not house nft owner");
+        require(IERC721(heroNft).ownerOf(lordNftId) == _from, "not hero nft owner");
         require(flagShape > 0 && flagColor > 0 && houseSymbol > 0 &&  bytes(houseName).length > 0, "house params err");
 
-        {
-            bytes memory prefix     = "\x19Ethereum Signed Message:\n32";
-            bytes32 message         = keccak256(abi.encodePacked(lordNftId, address(this), msg.sender, nonce[msg.sender]));
-            bytes32 hash            = keccak256(abi.encodePacked(prefix, message));
-            address recover         = ecrecover(hash, _v, _r, _s);
-
-            require(recover == verifier, "verification failed about startDuel");
-        }
+        address recover = verifySignature(_from, _data, _v, _r, _s);
+        require(recover == verifier, "verification failed about set house nft");
         
-        HouseParams storage house = houseParams[_houseId];
+        HouseParams storage house = houseParams[houseId];
         house.flagShape           = flagShape;
         house.houseSymbol         = houseSymbol;
         house.flagColor           = flagColor;
         house.houseName           = houseName;
         house.lordNftId           = lordNftId;
         
-        nonce[msg.sender]++;
-        emit SetHouse(msg.sender, _houseId, lordNftId, block.timestamp);
+        nonce[_from]++;
+        emit SetHouse(_from, houseId, lordNftId, block.timestamp);
 
+    }
+
+    // Verifying vrs
+    function verifySignature(address _addr, bytes calldata _data, uint8 _v, bytes32 _r, bytes32 _s) internal view returns (address) {
+        bytes memory prefix     = "\x19Ethereum Signed Message:\n32";
+        bytes32 message         = keccak256(abi.encodePacked(nonce[_addr], _addr, _data, address(this)));
+        bytes32 hash            = keccak256(abi.encodePacked(prefix, message));
+        return ecrecover(hash, _v, _r, _s);
     }
 
     // Method called by the contract owner

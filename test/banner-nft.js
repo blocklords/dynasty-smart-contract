@@ -47,8 +47,8 @@ contract("BannerNFT", accounts => {
 
     const logs = result.receipt.logs;
     const tokenIdEvent = logs.find(log => log.event === 'Minted');
-    // const MintedTokenId = tokenIdEvent.args.tokenId;
-    console.log("MintedTokenId:", MintedTokenId.toString());
+    const MintedTokenId = tokenIdEvent.args.tokenId;
+    // console.log("MintedTokenId:", MintedTokenId.toString());
 
     const owner = await bannerNFT.ownerOf(MintedTokenId);
     assert.equal(owner, accounts[0], "NFT was not minted successfully");

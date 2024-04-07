@@ -31,49 +31,49 @@ contract Duel is IERC721Receiver, Pausable, Ownable {
         verifier    = _verifier;
     }
 
-    function startDuel(uint256 _nftId, uint8 _v, bytes32 _r, bytes32 _s) external {
+    function startDuel(address _from, uint256 _nftId, uint8 _v, bytes32 _r, bytes32 _s) external {
         require(_nftId > 0, "nft Id invalid");
-        require(playerData[msg.sender] == 0, "the NFT has been imported");
+        require(playerData[_from] == 0, "the NFT has been imported");
 
         IERC721 nft = IERC721(heroNft);
-        require(nft.ownerOf(_nftId) == msg.sender, "not hero nft owner");
+        require(nft.ownerOf(_nftId) == _from, "not hero nft owner");
         {
             bytes memory prefix     = "\x19Ethereum Signed Message:\n32";
-            bytes32 message         = keccak256(abi.encodePacked(_nftId, msg.sender, address(this), block.chainid, nonce[msg.sender]));
+            bytes32 message         = keccak256(abi.encodePacked(_nftId, _from, address(this), nonce[_from]));
             bytes32 hash            = keccak256(abi.encodePacked(prefix, message));
             address recover         = ecrecover(hash, _v, _r, _s);
 
             require(recover == verifier, "verification failed about startDuel");
         }
 
-        nft.safeTransferFrom(msg.sender, address(this), _nftId);
+        nft.safeTransferFrom(_from, address(this), _nftId);
 
-        nonce[msg.sender]++;
-        playerData[msg.sender] = _nftId;
+        nonce[_from]++;
+        playerData[_from] = _nftId;
 
-        emit StartDuel(msg.sender, _nftId, block.timestamp);
+        emit StartDuel(_from, _nftId, block.timestamp);
     }
 
-    function finishDuel(uint256 _nftId, uint8 _v, bytes32 _r, bytes32 _s) external {
+    function finishDuel(address _from, uint256 _nftId, uint8 _v, bytes32 _r, bytes32 _s) external {
         require(_nftId > 0, "nft Id invalid");
-        require(playerData[msg.sender] == _nftId, "the nft for export is different from that for import");
+        require(playerData[_from] == _nftId, "the nft for export is different from that for import");
 
         IERC721 nft = IERC721(heroNft);
         {
             bytes memory prefix     = "\x19Ethereum Signed Message:\n32";
-            bytes32 message         = keccak256(abi.encodePacked(_nftId, msg.sender, address(this), block.chainid, nonce[msg.sender]));
+            bytes32 message         = keccak256(abi.encodePacked(_nftId, _from, address(this), nonce[_from]));
             bytes32 hash            = keccak256(abi.encodePacked(prefix, message));
             address recover         = ecrecover(hash, _v, _r, _s);
 
             require(recover == verifier, "verification failed about finishDuel");
         }
 
-        nft.safeTransferFrom( address(this), msg.sender, _nftId);
+        nft.safeTransferFrom( address(this), _from, _nftId);
 
-        nonce[msg.sender]++;
-        delete playerData[msg.sender];
+        nonce[_from]++;
+        delete playerData[_from];
 
-        emit FinishDuel(msg.sender, _nftId, block.timestamp);
+        emit FinishDuel(_from, _nftId, block.timestamp);
     }
 
     // Method called by the contract owner
