@@ -55,8 +55,7 @@ contract HouseNFT is ERC721Enumerable, Ownable {
 
         require(flagShape > 0 && flagColor > 0 && houseSymbol > 0 &&  bytes(houseName).length > 0, "house params err");
       
-        address recover = verifySignature(_to, _data, _v, _r, _s);
-        require(recover == verifier, "verification failed about mint house nft");
+        verifySignature(_to, _data, _v, _r, _s);
         
         _safeMint(_to, tokenId);
 
@@ -81,11 +80,10 @@ contract HouseNFT is ERC721Enumerable, Ownable {
             = abi.decode(_data, (uint256, uint256, uint256, string, uint256, uint256));
 
         require(IERC721(address(this)).ownerOf(houseId) == _from, "not house nft owner");
-        require(IERC721(heroNft).ownerOf(lordNftId) == _from, "not hero nft owner");
+        // require(IERC721(heroNft).ownerOf(lordNftId) == _from, "not hero nft owner");
         require(flagShape > 0 && flagColor > 0 && houseSymbol > 0 &&  bytes(houseName).length > 0, "house params err");
 
-        address recover = verifySignature(_from, _data, _v, _r, _s);
-        require(recover == verifier, "verification failed about set house nft");
+        verifySignature(_from, _data, _v, _r, _s);
         
         HouseParams storage house = houseParams[houseId];
         house.flagShape           = flagShape;
@@ -100,11 +98,12 @@ contract HouseNFT is ERC721Enumerable, Ownable {
     }
 
     // Verifying vrs
-    function verifySignature(address _addr, bytes calldata _data, uint8 _v, bytes32 _r, bytes32 _s) internal view returns (address) {
+    function verifySignature(address _addr, bytes calldata _data, uint8 _v, bytes32 _r, bytes32 _s) internal view {
         bytes memory prefix     = "\x19Ethereum Signed Message:\n32";
         bytes32 message         = keccak256(abi.encodePacked(nonce[_addr], _addr, _data, address(this)));
         bytes32 hash            = keccak256(abi.encodePacked(prefix, message));
-        return ecrecover(hash, _v, _r, _s);
+        address recover = ecrecover(hash, _v, _r, _s);
+        require(recover == verifier, "verification failed");
     }
 
     // Method called by the contract owner
