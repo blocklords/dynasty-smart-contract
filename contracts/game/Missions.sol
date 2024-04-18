@@ -114,11 +114,6 @@ contract Missions is IERC721Receiver, Pausable, Ownable {
         verifier = _verifier;
     }
 
-    function setHeroNFT(address _nftAddress) external onlyOwner{
-        require(_nftAddress != address(0), "nft address can't be zero address ");
-        heroNft = _nftAddress;
-    }
-
     function pause() public onlyOwner {
         Pausable._pause();
     }
