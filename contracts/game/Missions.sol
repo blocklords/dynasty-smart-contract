@@ -20,8 +20,8 @@ contract Missions is IERC721Receiver, Pausable, Ownable {
     mapping(address => mapping(uint256 => uint256[3])) public playerTeams;
     mapping(address => uint256) public nonce;
 
-    event StartMissions(address indexed owner, uint256 indexed teamId, uint256[3] indexed nftIds, uint256 time);
-    event FinishMissions(address indexed owner, uint256 indexed teamId, uint256[3] indexed nftIds, uint256 time);
+    event StartMissions(address indexed owner, uint256 indexed teamId, uint256 nfts0, uint256 nfts1, uint256 nfts2, uint256 time);
+    event FinishMissions(address indexed owner, uint256 indexed teamId, uint256 nfts0, uint256 nfts1, uint256 nfts2, uint256 time);
     
     constructor(address initialOwner, address _heroNft, address _verifier) Ownable(initialOwner) {
         require(_heroNft != address(0), "hero nft address not zero");
@@ -40,14 +40,20 @@ contract Missions is IERC721Receiver, Pausable, Ownable {
         // ensure the number of NFTs is between 1 and 3
         require(nftIds.length > 0 && nftIds.length <=3, "invalid number of nfts");
 
-        // ensure the teamId is not already in use
+        bool deposit = false;
         for (uint256 i = 0; i < nftIds.length; i++) {
+            // ensure the teamId is not already in use
             require(playerTeams[_from][teamId][i] == 0, "this team already exists");
-            if (playerTeams[_from][teamId][i] != 0) {
-                // verify ownership of NFTs
+
+            // verify ownership of NFTs
+            if (nftIds[i] != 0) {
                 require(IERC721(heroNft).ownerOf(nftIds[i]) == _from, "hero NFT does not belong to sender");
+                deposit = true;
             }
         }
+
+        // at least one NFT must be deposited
+        require(deposit, "one nft must be deposited");
 
         // verify the signature and ownership of NFTs
         verifySignature(_from, _data, _v, _r, _s);
@@ -62,7 +68,7 @@ contract Missions is IERC721Receiver, Pausable, Ownable {
         playerTeams[_from][teamId] = nftIds;
         nonce[_from]++;
 
-        emit StartMissions(_from, teamId, nftIds, block.timestamp);
+        emit StartMissions(_from, teamId, nftIds[0], nftIds[1], nftIds[2], block.timestamp);
     }
 
     function finishMissions(address _from, bytes calldata _data, uint8 _v, bytes32 _r, bytes32 _s) external {
@@ -100,7 +106,7 @@ contract Missions is IERC721Receiver, Pausable, Ownable {
         delete playerTeams[_from][teamId];
         nonce[_from]++;
 
-        emit FinishMissions(_from, teamId, nftIds, block.timestamp);
+        emit FinishMissions(_from, teamId, nftIds[0], nftIds[1], nftIds[2], block.timestamp);
     }
 
     // Verify signature and hero ownership

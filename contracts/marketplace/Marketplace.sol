@@ -242,7 +242,7 @@ contract Marketplace is IERC721Receiver, Ownable {
         obj.buyer = payable(msg.sender);
 
         obj.status = 1;
-        emit Buy(obj.id, obj.tokenId, msg.sender, price, tipsFee, obj.currency);
+        emit Buy(obj.id, obj.tokenId, obj.buyer, price, tipsFee, obj.currency);
     }
 
     /// @dev fetch sale object at nftId and nftAddress
