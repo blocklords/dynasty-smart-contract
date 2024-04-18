@@ -53,6 +53,8 @@ contract Marketplace is IERC721Receiver, Ownable {
     /// @param _feeReceiver fee receiving address
     /// @param _feeRate fee amount
     constructor(address initialOwner, address payable _feeReceiver, uint256 _feeRate) Ownable(initialOwner) {
+        require(_feeReceiver != address(0), "receiver address should not be equal to 0");
+        require(_feeRate <= 100, "fee rate can not exceed 10%");
         feeReceiver = _feeReceiver;
         feeRate = _feeRate;
         // initReentrancyStatus();
