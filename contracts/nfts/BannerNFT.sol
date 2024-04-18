@@ -27,11 +27,12 @@ contract BannerNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
         verifier = _verifier;
     }
 
-    function safeMint(address _to, uint256 _tokenId, uint8 _v, bytes32 _r, bytes32 _s) external returns(uint256) {
+    function safeMint(address _to, uint256 _tokenId, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external returns(uint256) {
+        require(_deadline >= block.timestamp, "signature has expired");
         
         {
             bytes memory prefix     = "\x19Ethereum Signed Message:\n32";
-            bytes32 message         = keccak256(abi.encodePacked(_to, _tokenId, address(this), nonce[_to]));
+            bytes32 message         = keccak256(abi.encodePacked(_to, _tokenId, address(this), nonce[_to], _deadline));
             bytes32 hash            = keccak256(abi.encodePacked(prefix, message));
             address recover         = ecrecover(hash, _v, _r, _s);
 

@@ -32,8 +32,10 @@ contract Missions is IERC721Receiver, Pausable, Ownable {
     }
 
     function startMissions(address _from, bytes calldata _data, uint8 _v, bytes32 _r, bytes32 _s) external {
-        (uint256 teamId, uint256[3] memory nftIds) 
-            = abi.decode(_data, (uint256, uint256[3]));
+        (uint256 teamId, uint256[3] memory nftIds, uint256 deadline) 
+            = abi.decode(_data, (uint256, uint256[3], uint256));
+
+        require(deadline >= block.timestamp, "signature has expired");
 
         // ensure the number of NFTs is between 1 and 3
         require(nftIds.length > 0 && nftIds.length <=3, "invalid number of nfts");
@@ -64,8 +66,10 @@ contract Missions is IERC721Receiver, Pausable, Ownable {
     }
 
     function finishMissions(address _from, bytes calldata _data, uint8 _v, bytes32 _r, bytes32 _s) external {
-        (uint256 teamId) 
-            = abi.decode(_data, (uint256));
+        (uint256 teamId, uint256 deadline) 
+            = abi.decode(_data, (uint256, uint256));
+
+        require(deadline >= block.timestamp, "signature has expired");
 
         uint256[3] memory nftIds = playerTeams[_from][teamId];
         

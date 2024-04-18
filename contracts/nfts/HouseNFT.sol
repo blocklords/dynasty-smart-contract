@@ -48,12 +48,13 @@ contract HouseNFT is ERC721Enumerable, Ownable {
     function safeMint(address _to, bytes calldata _data, uint8 _v, bytes32 _r, bytes32 _s) external returns(uint256) {
         require(!exists[_to], "you already own the house nft");
 
-        uint256 tokenId = nextTokenId++;
+        (uint256 flagShape, uint256 houseSymbol, uint256 flagColor, string memory houseName, uint256 deadline) 
+            = abi.decode(_data, (uint256, uint256, uint256, string, uint256));
 
-        (uint256 flagShape, uint256 houseSymbol, uint256 flagColor, string memory houseName) 
-            = abi.decode(_data, (uint256, uint256, uint256, string));
-
+        require(deadline >= block.timestamp, "signature has expired");
         require(flagShape > 0 && flagColor > 0 && houseSymbol > 0 &&  bytes(houseName).length > 0, "house params err");
+
+        uint256 tokenId = nextTokenId++;
       
         verifySignature(_to, _data, _v, _r, _s);
         
@@ -76,9 +77,10 @@ contract HouseNFT is ERC721Enumerable, Ownable {
     }
 
     function setHouse (address _from, bytes calldata _data, uint8 _v, bytes32 _r, bytes32 _s) external {
-        (uint256 flagShape, uint256 houseSymbol, uint256 flagColor, string memory houseName, uint256 lordNftId, uint256 houseId) 
-            = abi.decode(_data, (uint256, uint256, uint256, string, uint256, uint256));
+        (uint256 flagShape, uint256 houseSymbol, uint256 flagColor, string memory houseName, uint256 lordNftId, uint256 houseId, uint256 deadline) 
+            = abi.decode(_data, (uint256, uint256, uint256, string, uint256, uint256, uint256));
 
+        require(deadline >= block.timestamp, "signature has expired");
         require(IERC721(address(this)).ownerOf(houseId) == _from, "not house nft owner");
         // require(IERC721(heroNft).ownerOf(lordNftId) == _from, "not hero nft owner");
         require(flagShape > 0 && flagColor > 0 && houseSymbol > 0 &&  bytes(houseName).length > 0, "house params err");
