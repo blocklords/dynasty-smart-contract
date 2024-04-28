@@ -13,8 +13,9 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
  
 contract HeroNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
 
-    string private baseUri;
-    address public verifier;
+    bool    private lock;
+    string  private baseUri;
+    address public  verifier;
 
     mapping(address => uint256) public nonce;
 
@@ -27,7 +28,14 @@ contract HeroNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
         verifier = _verifier;
     }
     
-    function safeMint(address _to, uint256 _tokenId, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external returns(uint256) {
+    modifier nonReentrant() {
+        require(!lock, "no reentrant call");
+        lock = true;
+        _;
+        lock = false;
+    }
+    
+    function safeMint(address _to, uint256 _tokenId, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant  returns(uint256) {
         require(_deadline >= block.timestamp, "signature has expired");
 
         {
@@ -39,8 +47,8 @@ contract HeroNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
             require(recover == verifier, "Verification failed about mint hero nft");
         }
 
-        _safeMint(_to, _tokenId);
         nonce[_to]++;
+        _safeMint(_to, _tokenId);
         
         emit Minted(_to, _tokenId, block.timestamp);
         return _tokenId;

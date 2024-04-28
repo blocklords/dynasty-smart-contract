@@ -14,8 +14,9 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
  
 contract Duel is IERC721Receiver, Pausable, Ownable {
 
-    address public heroNft;
-    address public verifier;
+    bool    private lock;
+    address public  heroNft;
+    address public  verifier;
 
     mapping(address => uint256) public playerData;
     mapping(address => uint256) public nonce;
@@ -31,7 +32,14 @@ contract Duel is IERC721Receiver, Pausable, Ownable {
         verifier    = _verifier;
     }
 
-    function startDuel(address _from, uint256 _nftId, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external {
+    modifier nonReentrant() {
+        require(!lock, "no reentrant call");
+        lock = true;
+        _;
+        lock = false;
+    }
+
+    function startDuel(address _from, uint256 _nftId, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant{
         require(_deadline >= block.timestamp, "signature has expired");
         require(_nftId > 0, "nft Id invalid");
         require(playerData[_from] == 0, "the NFT has been imported");
@@ -47,15 +55,15 @@ contract Duel is IERC721Receiver, Pausable, Ownable {
             require(recover == verifier, "verification failed about startDuel");
         }
 
-        nft.safeTransferFrom(_from, address(this), _nftId);
-
         nonce[_from]++;
         playerData[_from] = _nftId;
+
+        nft.safeTransferFrom(_from, address(this), _nftId);
 
         emit StartDuel(_from, _nftId, block.timestamp);
     }
 
-    function finishDuel(address _from, uint256 _nftId, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external {
+    function finishDuel(address _from, uint256 _nftId, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant{
         require(_deadline >= block.timestamp, "signature has expired");
         require(_nftId > 0, "nft Id invalid");
         require(playerData[_from] == _nftId, "the nft for export is different from that for import");
@@ -70,10 +78,10 @@ contract Duel is IERC721Receiver, Pausable, Ownable {
             require(recover == verifier, "verification failed about finishDuel");
         }
 
-        nft.safeTransferFrom( address(this), _from, _nftId);
-
         nonce[_from]++;
         delete playerData[_from];
+
+        nft.safeTransferFrom( address(this), _from, _nftId);
 
         emit FinishDuel(_from, _nftId, block.timestamp);
     }

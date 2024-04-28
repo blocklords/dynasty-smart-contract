@@ -19,6 +19,7 @@ contract Marketplace is IERC721Receiver, Ownable {
     using SafeERC20 for IERC20;
 
     uint256 public  salesAmount;    // keep count of SalesObject amount
+    bool    private lock;           // reentrancy guard
     bool    public  salesEnabled;   // enable/disable trading
     uint256 public  feeRate;        // fee rate. feeAmount = (feeRate / 1000) * price
     address payable feeReceiver;    // fee reciever
@@ -33,16 +34,14 @@ contract Marketplace is IERC721Receiver, Ownable {
         address payable buyer;    // buyer address
         uint256 startTime;        // timestamp when the sale starts
         uint256 price;            // nft price
-        uint8 status;             // 2 = sale canceled, 1 = sold, 0 = for sale
+        uint8   status;             // 2 = sale canceled, 1 = sold, 0 = for sale
     }
 
-    
     // nft token address => (nft id => salesObject)
     mapping(address => mapping(uint256 => SalesObject)) salesObjects;  // marketplace sales objects.
 
     mapping(address => bool) public supportedNft;                      // supported ERC721 contracts
     mapping(address => bool) public supportedCurrency;                 // supported ERC20 contracts
-
 
     event Buy(uint256 indexed saleId, uint256 tokenId, address buyer, uint256 price, uint256 tipsFee, address currency);
     event Sell( uint256 indexed saleId, uint256 tokenId, address nft, address currency, address seller, address buyer, uint256 startTime, uint256 price);
@@ -65,6 +64,13 @@ contract Marketplace is IERC721Receiver, Ownable {
         feeReceiver = _feeReceiver;
         feeRate = _feeRate;
         // initReentrancyStatus();
+    }
+
+    modifier nonReentrant() {
+        require(!lock, "no reentrant call");
+        lock = true;
+        _;
+        lock = false;
     }
 
     //--------------------------------------------------
@@ -142,38 +148,20 @@ contract Marketplace is IERC721Receiver, Ownable {
     //--------------------------------------------------
     // Public methods
     //--------------------------------------------------
-
-    /// @notice cancel nft sale
-    /// @param _tokenId nft unique ID
-    /// @param _nftAddress nft token address
-    function cancelSell(uint _tokenId, address _nftAddress) public {
-        SalesObject storage obj = salesObjects[_nftAddress][_tokenId];
-        require(obj.status == 0, "status: sold or canceled");
-        require(obj.seller == msg.sender, "seller not nft owner");
-
-        obj.status = 2;
-        IERC721 nft = IERC721(obj.nft);
-        nft.safeTransferFrom(address(this), obj.seller, obj.tokenId);
-
-        emit CancelSell(obj.id, obj.tokenId);
-    }
-
     /// @notice put nft for sale
     /// @param _tokenId nft unique ID
     /// @param _price required price to pay by buyer. Seller receives less: price - fees
     /// @param _nftAddress nft token address
     /// @param _currency currency token address
     /// @return salesAmount total amount of sales
-    function sell(uint256 _tokenId, uint256 _price, address _nftAddress, address _currency) public returns(uint) {
+    function sell(uint256 _tokenId, uint256 _price, address _nftAddress, address _currency) public nonReentrant returns(uint) {
         require(_nftAddress != address(0x0), "invalid nft address");
         require(_tokenId != 0, "invalid nft token");
         require(salesEnabled, "sales are closed");
         require(supportedNft[_nftAddress], "nft address unsupported");
         require(supportedCurrency[_currency], "currency not supported");
-        IERC721(_nftAddress).safeTransferFrom(msg.sender, address(this), _tokenId);
 
         salesAmount++;
-
         salesObjects[_nftAddress][_tokenId] = SalesObject(
             salesAmount,
             _tokenId,
@@ -186,30 +174,18 @@ contract Marketplace is IERC721Receiver, Ownable {
             0
         );
 
+        IERC721(_nftAddress).safeTransferFrom(msg.sender, address(this), _tokenId);
+
         emit Sell(salesAmount, _tokenId, _nftAddress, _currency, msg.sender, address(0x0), block.timestamp, _price);
 
         return salesAmount;
-    }
-
-    /// @dev encrypt token data
-    /// @return encrypted data
-    function onERC721Received(address operator, address from, uint256 tokenId, bytes memory data)public override returns (bytes4) {
-        //only receive the _nft staff
-        if (address(this) != operator) {
-            //invalid from nft
-            return 0;
-        }
-
-        //success
-        emit NftReceived(operator, from, tokenId, data);
-        return bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"));
     }
 
     /// @notice buy nft
     /// @param _tokenId nft unique ID
     /// @param _nftAddress nft token address
     /// @param _currency currency token address
-    function buy(uint _tokenId, address _nftAddress, address _currency, uint _price) public payable {
+    function buy(uint _tokenId, address _nftAddress, address _currency, uint _price) public nonReentrant payable {
         require(tx.origin == msg.sender, "origin is not sender");
 
         SalesObject storage obj = salesObjects[_nftAddress][_tokenId];
@@ -224,6 +200,8 @@ contract Marketplace is IERC721Receiver, Ownable {
         uint256 tipsFee = price * feeRate / 1000;
         uint256 purchase = price - tipsFee;
 
+        obj.status = 1;
+        
         if (obj.currency == address(0x0)) {
             require (msg.value >= price, "your price is too low");
             uint256 returnBack = msg.value - price;
@@ -241,9 +219,24 @@ contract Marketplace is IERC721Receiver, Ownable {
         nft.safeTransferFrom(address(this), msg.sender, obj.tokenId);
         obj.buyer = payable(msg.sender);
 
-        obj.status = 1;
         emit Buy(obj.id, obj.tokenId, obj.buyer, price, tipsFee, obj.currency);
     }
+
+    /// @notice cancel nft sale
+    /// @param _tokenId nft unique ID
+    /// @param _nftAddress nft token address
+    function cancelSell(uint _tokenId, address _nftAddress) public nonReentrant{
+        SalesObject storage obj = salesObjects[_nftAddress][_tokenId];
+        require(obj.status == 0, "status: sold or canceled");
+        require(obj.seller == msg.sender, "seller not nft owner");
+
+        obj.status = 2;
+        IERC721 nft = IERC721(obj.nft);
+        nft.safeTransferFrom(address(this), obj.seller, obj.tokenId);
+
+        emit CancelSell(obj.id, obj.tokenId);
+    }
+
 
     /// @dev fetch sale object at nftId and nftAddress
     /// @param _tokenId unique nft ID
@@ -261,5 +254,18 @@ contract Marketplace is IERC721Receiver, Ownable {
         SalesObject storage obj = salesObjects[_nftAddress][_tokenId];
         return obj.price;
     }
+    
+    /// @dev encrypt token data
+    /// @return encrypted data
+    function onERC721Received(address operator, address from, uint256 tokenId, bytes memory data)public override returns (bytes4) {
+        //only receive the _nft staff
+        if (address(this) != operator) {
+            //invalid from nft
+            return 0;
+        }
 
+        //success
+        emit NftReceived(operator, from, tokenId, data);
+        return bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"));
+    }
 }

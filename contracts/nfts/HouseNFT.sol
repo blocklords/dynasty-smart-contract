@@ -13,10 +13,11 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
  
 contract HouseNFT is ERC721Enumerable, Ownable {
     
+    bool    private lock;
     uint256 private nextTokenId;
     string  private baseUri;
-    address public verifier;
-    address public heroNft;
+    address public  verifier;
+    address public  heroNft;
 
     struct HouseParams {
         uint256 flagShape;
@@ -45,7 +46,14 @@ contract HouseNFT is ERC721Enumerable, Ownable {
         heroNft = _heroNft;
     }
 
-    function safeMint(address _to, bytes calldata _data, uint8 _v, bytes32 _r, bytes32 _s) external returns(uint256) {
+    modifier nonReentrant() {
+        require(!lock, "no reentrant call");
+        lock = true;
+        _;
+        lock = false;
+    }
+
+    function safeMint(address _to, bytes calldata _data, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant returns(uint256) {
         require(!exists[_to], "you already own the house nft");
 
         (uint256 flagShape, uint256 houseSymbol, uint256 flagColor, string memory houseName, uint256 deadline) 
@@ -58,8 +66,6 @@ contract HouseNFT is ERC721Enumerable, Ownable {
       
         verifySignature(_to, _data, _v, _r, _s);
         
-        _safeMint(_to, tokenId);
-
         exists[_to]                = true;
         
         HouseParams storage house = houseParams[tokenId];
@@ -72,11 +78,13 @@ contract HouseNFT is ERC721Enumerable, Ownable {
         soulbound[tokenId]        = true;
         nonce[_to]++;
 
+        _safeMint(_to, tokenId);
+
         emit Minted(_to, tokenId, block.timestamp);
         return tokenId;
     }
 
-    function setHouse (address _from, bytes calldata _data, uint8 _v, bytes32 _r, bytes32 _s) external {
+    function setHouse (address _from, bytes calldata _data, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant{
         (uint256 flagShape, uint256 houseSymbol, uint256 flagColor, string memory houseName, uint256 lordNftId, uint256 houseId, uint256 deadline) 
             = abi.decode(_data, (uint256, uint256, uint256, string, uint256, uint256, uint256));
 
