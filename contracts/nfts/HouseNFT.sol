@@ -102,7 +102,7 @@ contract HouseNFT is ERC721Enumerable, Ownable {
     // Verifying vrs
     function verifySignature(address _addr, bytes calldata _data, uint8 _v, bytes32 _r, bytes32 _s) internal view {
         bytes memory prefix     = "\x19Ethereum Signed Message:\n32";
-        bytes32 message         = keccak256(abi.encodePacked(nonce[_addr], _addr, _data, address(this)));
+        bytes32 message         = keccak256(abi.encodePacked(nonce[_addr], _addr, _data, address(this), block.chainid));
         bytes32 hash            = keccak256(abi.encodePacked(prefix, message));
         address recover = ecrecover(hash, _v, _r, _s);
         require(recover == verifier, "verification failed");

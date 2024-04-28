@@ -40,7 +40,7 @@ contract Duel is IERC721Receiver, Pausable, Ownable {
         require(nft.ownerOf(_nftId) == _from, "not hero nft owner");
         {
             bytes memory prefix     = "\x19Ethereum Signed Message:\n32";
-            bytes32 message         = keccak256(abi.encodePacked(_nftId, _from, address(this), nonce[_from], _deadline));
+            bytes32 message         = keccak256(abi.encodePacked(_nftId, _from, address(this), nonce[_from], _deadline, block.chainid));
             bytes32 hash            = keccak256(abi.encodePacked(prefix, message));
             address recover         = ecrecover(hash, _v, _r, _s);
 
@@ -63,7 +63,7 @@ contract Duel is IERC721Receiver, Pausable, Ownable {
         IERC721 nft = IERC721(heroNft);
         {
             bytes memory prefix     = "\x19Ethereum Signed Message:\n32";
-            bytes32 message         = keccak256(abi.encodePacked(_nftId, _from, address(this), nonce[_from], _deadline));
+            bytes32 message         = keccak256(abi.encodePacked(_nftId, _from, address(this), nonce[_from], _deadline, block.chainid));
             bytes32 hash            = keccak256(abi.encodePacked(prefix, message));
             address recover         = ecrecover(hash, _v, _r, _s);
 

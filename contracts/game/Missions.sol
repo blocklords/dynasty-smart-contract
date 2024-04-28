@@ -112,7 +112,7 @@ contract Missions is IERC721Receiver, Pausable, Ownable {
     // Verify signature and hero ownership
     function verifySignature(address _addr, bytes calldata _data, uint8 _v, bytes32 _r, bytes32 _s) internal view {
         bytes memory prefix = "\x19Ethereum Signed Message:\n32";
-        bytes32 message = keccak256(abi.encodePacked(_addr, _data, address(this), nonce[_addr]));
+        bytes32 message = keccak256(abi.encodePacked(_addr, _data, address(this), nonce[_addr], block.chainid));
         bytes32 hash = keccak256(abi.encodePacked(prefix, message));
         address recover = ecrecover(hash, _v, _r, _s);
         require(recover == verifier, "Verification failed");
