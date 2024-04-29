@@ -201,7 +201,7 @@ contract Marketplace is IERC721Receiver, Ownable {
         uint256 purchase = price - tipsFee;
 
         obj.status = 1;
-        
+
         if (obj.currency == address(0x0)) {
             require (msg.value >= price, "your price is too low");
             uint256 returnBack = msg.value - price;
@@ -211,6 +211,7 @@ contract Marketplace is IERC721Receiver, Ownable {
                 feeReceiver.transfer(tipsFee);
             obj.seller.transfer(purchase);
         } else {
+            require(msg.value == 0, "invalid value");
             IERC20(obj.currency).safeTransferFrom(msg.sender, feeReceiver, tipsFee);
             IERC20(obj.currency).safeTransferFrom(msg.sender, obj.seller, purchase);
         }
