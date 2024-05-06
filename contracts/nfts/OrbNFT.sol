@@ -58,7 +58,7 @@ contract OrbNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
         _;
     }
     
-    function safeMint(address _to, uint256 _quality, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external onlyFactory returns(uint256) {
+    function safeMint(address _to, uint256 _quality, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant returns(uint256) {
         require(_quality >= 1 && _quality <= 6, "invalid quality");
         require(_deadline >= block.timestamp, "signature has expired");
         require(qualityLimit[_quality] > 0, "quality has reached its limit");
@@ -73,12 +73,31 @@ contract OrbNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
         }
 
         uint256 _tokenId = nextTokenId++;
-        _safeMint(_to, _tokenId);
 
         // decrease quality limit
         qualityLimit[_quality]--;
         quality[_tokenId] = _quality;
         nonce[_to]++;
+
+        _safeMint(_to, _tokenId);
+        
+        emit Minted(_to, _tokenId, block.timestamp);
+        return _tokenId;
+    }
+
+    
+    function mint(address _to, uint256 _quality) external onlyFactory nonReentrant returns(uint256) {
+        require(_quality >= 1 && _quality <= 6, "invalid quality");
+        require(qualityLimit[_quality] > 0, "quality has reached its limit");
+
+        uint256 _tokenId = nextTokenId++;
+
+        // decrease quality limit
+        qualityLimit[_quality]--;
+        quality[_tokenId] = _quality;
+        nonce[_to]++;
+
+        _safeMint(_to, _tokenId);
         
         emit Minted(_to, _tokenId, block.timestamp);
         return _tokenId;
@@ -90,6 +109,7 @@ contract OrbNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
     }
 
     function setFactory(address _factory) public onlyOwner {
+        require(_factory != address(0), "factory can't be zero address ");
 	    factory = _factory;
 
         emit SetFactory(_factory, block.timestamp);

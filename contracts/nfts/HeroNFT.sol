@@ -16,10 +16,12 @@ contract HeroNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
     bool    private lock;
     string  private baseUri;
     address public  verifier;
+    address private factory;
 
     mapping(address => uint256) public nonce;
 
     event Minted(address indexed to, uint256 indexed tokenId, uint256 indexed time);
+    event SetFactory(address indexed factory, uint256 indexed time);
     event SetVerifier(address indexed verifier, uint256 indexed time);
 
     constructor(address initialOwner, address _verifier) ERC721("Blocklords Heroes", "BLHE") Ownable(initialOwner) {
@@ -34,8 +36,13 @@ contract HeroNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
         _;
         lock = false;
     }
+
+    modifier onlyFactory() {
+        require(factory == _msgSender(), "only NFT Factory can call the method");
+        _;
+    }
     
-    function safeMint(address _to, uint256 _tokenId, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant  returns(uint256) {
+    function safeMint(address _to, uint256 _tokenId, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant returns(uint256) {
         require(_deadline >= block.timestamp, "signature has expired");
 
         {
@@ -53,6 +60,14 @@ contract HeroNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
         emit Minted(_to, _tokenId, block.timestamp);
         return _tokenId;
     }
+    
+    function mint(address _to, uint256 _tokenId) external onlyFactory nonReentrant returns(uint256) {     
+        nonce[_to]++;
+        _safeMint(_to, _tokenId);
+        
+        emit Minted(_to, _tokenId, block.timestamp);
+        return _tokenId;
+    }
 
     // Method called by the contract owner
     function setBaseURI(string calldata _baseUri) external onlyOwner() {
@@ -64,6 +79,13 @@ contract HeroNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
         verifier = _verifier;
 
         emit SetVerifier(_verifier, block.timestamp);
+    }
+
+    function setFactory(address _factory) public onlyOwner {
+        require(_factory != address(0), "factory can't be zero address ");
+	    factory = _factory;
+
+        emit SetFactory(_factory, block.timestamp);
     }
 
     // The following functions are overrides required by Solidity.
