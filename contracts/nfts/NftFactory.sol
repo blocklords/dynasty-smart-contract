@@ -30,14 +30,14 @@ contract NftFactory is AccessControl, Ownable {
     event BannerGeneratorAdded(address indexed OrbGenerator, uint256 indexed time);
     event BannerGeneratorRemoved(address indexed OrbGenerator, uint256 indexed time);
 
-    constructor(address initialOwner, address _orbNft, address _heroNft, address _bannerNft) Ownable(initialOwner) {
-        require(_orbNft    != address(0), "orb nft can't be zero address");
+    constructor(address initialOwner, address _heroNft, address _bannerNft, address _orbNft) Ownable(initialOwner) {
         require(_heroNft   != address(0), "hero nft can't be zero address");
         require(_bannerNft != address(0), "banner nft can't be zero address");
+        require(_orbNft    != address(0), "orb nft can't be zero address");
 
-	    orbNft    = OrbNFT(_orbNft);
 	    heroNft   = HeroNFT(_heroNft);
 	    bannerNft = BannerNFT(_bannerNft);
+	    orbNft    = OrbNFT(_orbNft);
 
 	    // Grant the default admin role to the initial owner
 	    _grantRole(DEFAULT_ADMIN_ROLE, initialOwner);
@@ -55,7 +55,7 @@ contract NftFactory is AccessControl, Ownable {
         _;
     }
 
-    modifier onlyHerobGenerator() {
+    modifier onlyHeroGenerator() {
         require(isHeroGenerator(msg.sender), "Restricted to random hero generator.");
         _;
     }
@@ -74,7 +74,7 @@ contract NftFactory is AccessControl, Ownable {
     }
 
     // Can only be called by hero generator to mint hero NFT
-    function mintHero(address _to, uint256 _tokenId) external onlyHerobGenerator returns(uint256) {
+    function mintHero(address _to, uint256 _tokenId) external onlyHeroGenerator returns(uint256) {
 	    return heroNft.mint(_to, _tokenId);
     }
 
