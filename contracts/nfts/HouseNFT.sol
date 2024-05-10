@@ -45,8 +45,8 @@ contract HouseNFT is ERC721Enumerable, Ownable {
      * @param _verifier Address of the verifier for signature verification.
      */
     constructor(address initialOwner, address _heroNft, address _verifier) ERC721("Blocklords House", "BLHS") Ownable(initialOwner) {
-        require(_verifier != address(0), "verifier can't be zero address");
-        require(_heroNft != address(0), "hero nft address not zero");
+        require(_verifier != address(0), "Verifier can't be zero address");
+        require(_heroNft != address(0), "Hero nft address not zero");
 
         nextTokenId = 1;
         verifier = _verifier;
@@ -57,7 +57,7 @@ contract HouseNFT is ERC721Enumerable, Ownable {
      * @dev Modifier to prevent reentrancy attacks.
      */
     modifier nonReentrant() {
-        require(!lock, "no reentrant call");
+        require(!lock, "No reentrant call");
         lock = true;
         _;
         lock = false;
@@ -72,14 +72,14 @@ contract HouseNFT is ERC721Enumerable, Ownable {
      * @param _s ECDSA signature parameter s.
      * @return The ID of the minted token.
      */
-    function safeMint(address _to, bytes calldata _data, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant returns(uint256) {
-        require(!exists[_to], "you already own the house nft");
+    function safeMint(address _to, bytes calldata _data, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant returns (uint256) {
+        require(!exists[_to], "You already own the house nft");
 
         (uint256 flagShape, uint256 houseSymbol, uint256 flagColor, string memory houseName) 
             = abi.decode(_data, (uint256, uint256, uint256, string));
 
-        require(_deadline >= block.timestamp, "signature has expired");
-        require(flagShape > 0 && flagColor > 0 && houseSymbol > 0 &&  bytes(houseName).length > 0, "house params err");
+        require(_deadline >= block.timestamp, "Signature has expired");
+        require(flagShape > 0 && flagColor > 0 && houseSymbol > 0 &&  bytes(houseName).length > 0, "House params err");
 
         uint256 tokenId = nextTokenId++;
       
@@ -117,9 +117,9 @@ contract HouseNFT is ERC721Enumerable, Ownable {
         (uint256 flagShape, uint256 houseSymbol, uint256 flagColor, string memory houseName, uint256 lordNftId, uint256 houseId) 
             = abi.decode(_data, (uint256, uint256, uint256, string, uint256, uint256));
 
-        require(_deadline >= block.timestamp, "signature has expired");
-        require(IERC721(address(this)).ownerOf(houseId) == _from, "not house nft owner");
-        require(flagShape > 0 && flagColor > 0 && houseSymbol > 0 &&  bytes(houseName).length > 0, "house params err");
+        require(_deadline >= block.timestamp, "Signature has expired");
+        require(IERC721(address(this)).ownerOf(houseId) == _from, "You are not the owner of this token");
+        require(flagShape > 0 && flagColor > 0 && houseSymbol > 0 &&  bytes(houseName).length > 0, "The house parameter is incorrect");
 
         // Verify the signature
         verifySignature(_from, _data, _deadline, _v, _r, _s);
@@ -149,7 +149,7 @@ contract HouseNFT is ERC721Enumerable, Ownable {
         bytes32 message         = keccak256(abi.encodePacked(nonce[_addr], _addr, _data, _deadline, address(this), block.chainid));
         bytes32 hash            = keccak256(abi.encodePacked(prefix, message));
         address recover = ecrecover(hash, _v, _r, _s);
-        require(recover == verifier, "verification failed");
+        require(recover == verifier, "Verification failed about house nft");
     }
 
     // Method called by the contract owner
@@ -157,8 +157,8 @@ contract HouseNFT is ERC721Enumerable, Ownable {
      * @dev Sets the address of the verifier contract for signature verification.
      * @param _verifier The address of the new verifier contract.
      */
-    function setVerifier (address _verifier) external onlyOwner {
-        require(_verifier != address(0), "verifier can't be zero address ");
+    function setVerifier(address _verifier) external onlyOwner {
+        require(_verifier != address(0), "Verifier can't be zero address ");
         verifier = _verifier;
 
         emit SetVerifier(_verifier, block.timestamp);
@@ -168,8 +168,8 @@ contract HouseNFT is ERC721Enumerable, Ownable {
         baseUri = _baseUri;
     }
 
-    function setHeroNft (address _nft) external onlyOwner {
-        require(_nft != address(0), "verifier can't be zero address ");
+    function setHeroNft(address _nft) external onlyOwner {
+        require(_nft != address(0), "Hero nft address can't be zero address ");
         heroNft = _nft;
         
         emit SetHeroNft(_nft, block.timestamp);
@@ -185,7 +185,7 @@ contract HouseNFT is ERC721Enumerable, Ownable {
     }
 
     function _update(address to, uint256 tokenId, address auth) internal override(ERC721Enumerable) returns (address) {
-        require(!soulbound[tokenId], "token is soulbound");
+        require(!soulbound[tokenId], "Token is soulbound");
         return super._update(to, tokenId, auth);
     }
     
