@@ -13,23 +13,26 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
  
 contract OrbNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
 
-    bool    private lock;
-    uint256 private nextTokenId;
-    string  private baseUri;
-    address public  verifier;
-    address private factory;
+    bool    private lock;              // Reentrancy guard
+    uint256 private nextTokenId;       // Next available token ID
+    string  private baseUri;           // Base URI for token metadata
+    address public  verifier;          // Address of the verifier for signature verification
+    address private factory;           // Address of the NFT factory contract
 
-    // tokenId mapping to quality (tokenId => quality), quality represented by numbers (1 to 6)
-    mapping(uint256 => uint256) public quality;
-
-    // quality limits (maximum supply per quality)
-    mapping(uint256 => uint256) public qualityLimit;
-    mapping(address => uint256) public nonce;
+    
+    mapping(uint256 => uint256) public quality;        // Mapping from token ID to quality (tokenId => quality), quality represented by numbers (1 to 6)
+    mapping(uint256 => uint256) public qualityLimit;   // Mapping from quality to quality limits (maximum supply per quality)
+    mapping(address => uint256) public nonce;          // Mapping from address to nonce for signature verification
 
     event Minted(address indexed to, uint256 indexed tokenId, uint256 indexed time);
     event SetFactory(address indexed factory, uint256 indexed time);
     event SetVerifier(address indexed verifier, uint256 indexed time);
 
+    /**
+     * @dev Contract constructor
+     * @param initialOwner Address of the initial owner
+     * @param _verifier Address of the verifier for signature verification
+     */
     constructor(address initialOwner, address _verifier) ERC721("Blocklords Orbs", "ORB") Ownable(initialOwner) {
         require(_verifier != address(0), "verifier can't be zero address");
 
@@ -46,19 +49,35 @@ contract OrbNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
         qualityLimit[6] = 100;
     }
     
+    /**
+     * @dev Modifier to prevent reentrancy attacks.
+     */
     modifier nonReentrant() {
-        require(!lock, "no reentrant call");
+        require(!lock, "No reentrant call");
         lock = true;
         _;
         lock = false;
     }
     
+    /**
+     * @dev Modifier to restrict access to only the factory contract.
+     */
     modifier onlyFactory() {
-        require(factory == _msgSender(), "only NFT Factory can call the method");
+        require(factory == _msgSender(), "Only NFT Factory can call the method");
         _;
     }
-    
-    function safeMint(address _to, uint256 _quality, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant returns(uint256) {
+     
+    /**
+     * @dev Safely mints a new Orb NFT.
+     * @param _to Address to mint the token to.
+     * @param _quality Quality of the orb to mint.
+     * @param _deadline Expiry timestamp for the signature.
+     * @param _v ECDSA signature parameter v.
+     * @param _r ECDSA signature parameter r.
+     * @param _s ECDSA signature parameter s.
+     * @return The ID of the minted token.
+     */
+    function safeMint(address _to, uint256 _quality, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant returns (uint256) {
         require(_quality >= 1 && _quality <= 6, "invalid quality");
         require(_deadline >= block.timestamp, "signature has expired");
         require(qualityLimit[_quality] > 0, "quality has reached its limit");
@@ -86,7 +105,13 @@ contract OrbNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
     }
 
     
-    function mint(address _to, uint256 _quality) external onlyFactory nonReentrant returns(uint256) {
+    /**
+     * @dev Mints a new Orb NFT.
+     * @param _to Address to mint the token to.
+     * @param _quality Quality of the orb to mint.
+     * @return The ID of the minted token.
+     */
+    function mint(address _to, uint256 _quality) external onlyFactory nonReentrant returns (uint256) {
         require(_quality >= 1 && _quality <= 6, "invalid quality");
         require(qualityLimit[_quality] > 0, "quality has reached its limit");
 
@@ -104,10 +129,18 @@ contract OrbNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
     }
 
     // Method called by the contract owner
+    /**
+     * @dev Sets the base URI for token metadata.
+     * @param _baseUri The base URI to set.
+     */
     function setBaseURI(string calldata _baseUri) external onlyOwner() {
         baseUri = _baseUri;
     }
 
+    /**
+     * @dev Sets the factory address.
+     * @param _factory Address of the factory contract.
+     */
     function setFactory(address _factory) public onlyOwner {
         require(_factory != address(0), "factory can't be zero address ");
 	    factory = _factory;
@@ -115,7 +148,10 @@ contract OrbNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
         emit SetFactory(_factory, block.timestamp);
     }
 
-
+    /**
+     * @dev Sets the verifier address for signature verification.
+     * @param _verifier The verifier address to set.
+     */
     function setVerifier (address _verifier) external onlyOwner {
         require(_verifier != address(0), "verifier can't be zero address ");
         verifier = _verifier;
