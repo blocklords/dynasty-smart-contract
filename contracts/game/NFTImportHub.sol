@@ -33,8 +33,8 @@ contract NFTImportHub is IERC721Receiver, Pausable, Ownable {
      * @param _verifier Address of the verifier for signature verification.
      */
     constructor(address initialOwner, address _heroNft, address _bannerNft, address _verifier) Ownable(initialOwner) {
-        require(_heroNft != address(0), "hero nft address not zero");
-        require(_verifier != address(0), "verifier can't be zero address");
+        require(_heroNft != address(0), "Hero nft can't be zero address");
+        require(_verifier != address(0), "Verifier can't be zero address");
         
         bannerNft = _bannerNft;
         heroNft   = _heroNft;
@@ -45,7 +45,7 @@ contract NFTImportHub is IERC721Receiver, Pausable, Ownable {
      * @dev Modifier to prevent reentrancy attacks.
      */
     modifier nonReentrant() {
-        require(!lock, "no reentrant call");
+        require(!lock, "No reentrant call");
         lock = true;
         _;
         lock = false;
@@ -76,7 +76,7 @@ contract NFTImportHub is IERC721Receiver, Pausable, Ownable {
         // Transfer the NFTs to the contract
 		for(uint i = 0; i < 5; i++){
 			if(_nft[i] > 0){
-				require(nft.ownerOf(_nft[i]) == msg.sender, "not hero owner");
+				require(nft.ownerOf(_nft[i]) == msg.sender, "Not hero owner");
 				nft.safeTransferFrom(msg.sender, 0x000000000000000000000000000000000000dEaD, _nft[i]);
 			}
 		}
@@ -103,12 +103,12 @@ contract NFTImportHub is IERC721Receiver, Pausable, Ownable {
 
         nonce[msg.sender]++;
 
-        IERC721 nft = IERC721(heroNft);
+        IERC721 nft = IERC721(bannerNft);
 
         // Transfer the NFTs to the contract
 		for(uint i = 0; i < 5; i++){
 			if(_nft[i] > 0){
-				require(nft.ownerOf(_nft[i]) == msg.sender, "not banner owner");
+				require(nft.ownerOf(_nft[i]) == msg.sender, "Not banner owner");
 				nft.safeTransferFrom(msg.sender, 0x000000000000000000000000000000000000dEaD, _nft[i]);
 			}
 		}
@@ -136,7 +136,7 @@ contract NFTImportHub is IERC721Receiver, Pausable, Ownable {
      * @param _verifier The new verifier address.
      */
     function setVerifier (address _verifier) external onlyOwner {
-        require(_verifier != address(0), "verifier can't be zero address ");
+        require(_verifier != address(0), "Verifier can't be zero address ");
         verifier = _verifier;
     }
 
