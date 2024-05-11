@@ -26,9 +26,7 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
     uint256 public  seasonId;                       // ID of the current season
     address public  factory;                        // Address of the factory contract
     address public  orbNft;                         // Address of the Orb NFT contract
-    address public  lrds;                           // Address of the LRDS token contract
     address public  verifier;                       // Address of the verifier for signature verification
-    address public  bank;                           // Address from which LRDS tokens are distributed
     address public  nftFactory;                     // Address of the NFT Factory contract
 
     struct Season {
@@ -52,21 +50,15 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
      * @param _heroNft The address of the Hero NFT contract.
      * @param _bannerNft The address of the Banner NFT contract.
      * @param _orbNft The address of the Orb NFT contract.
-     * @param _lrds The address of the LRDS token contract.
-     * @param _bank The address of the LRDS token bank contract.
      * @param _verifier The address of the verifier contract.
      */
-    constructor(address initialOwner, address _factory, address _heroNft, address _bannerNft, address _orbNft, address _lrds, address _bank, address _verifier) Ownable(initialOwner) {
+    constructor(address initialOwner, address _factory, address _heroNft, address _bannerNft, address _orbNft, address _verifier) Ownable(initialOwner) {
         require(_factory   != address(0), "Banner can't be zero address");
         require(_orbNft   != address(0), "Orb can't be zero address");
-        require(_lrds     != address(0), "LRDS can't be zero address");
-        require(_bank     != address(0), "Bank can't be zero address");
         require(_verifier != address(0), "Verifier can't be zero address");
         
         nftFactory   = _factory;
         orbNft       = _orbNft;
-        lrds         = _lrds;
-        bank         = _bank;
         verifier     = _verifier;
         
         nftTypes[0] = _heroNft;
@@ -203,7 +195,7 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
     }
 
     /**
-    * @dev Burns an Orb NFT and stakes LRDS tokens for rewards.
+    * @dev Burns an Orb NFT, triggering an event that facilitates obtaining LRDS tokens from a centralized backend.
     * @param _data Encoded data containing the NFT ID, quality, and amount of LRDS tokens to stake.
     * @param _deadline The timestamp by which the signature must be submitted.
     * @param _v The recovery byte of the signature.
@@ -230,12 +222,6 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
 
         nonce[msg.sender]++;
         nft.burn(nftId);
-
-        // transfer LRDS tokens from bank to the caller (msg.sender)
-        IERC20 token = IERC20(lrds);
-        require(token.balanceOf(bank) >= amount, "Not enough token to stake");
-
-        token.safeTransferFrom(bank, msg.sender, amount);
 
         emit BurnOrbForLRDS(msg.sender, nftId, quality, amount, block.timestamp);
     }
