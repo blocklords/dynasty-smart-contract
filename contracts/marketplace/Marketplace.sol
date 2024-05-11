@@ -226,8 +226,6 @@ contract Marketplace is IERC721Receiver, Ownable {
      * @param _currency currency token address
      */
     function buy(uint256 _tokenId, address _nftAddress, address _currency, uint _price) external nonReentrant payable {
-        require(tx.origin == msg.sender, "origin is not sender");
-
         SalesObject storage obj = salesObjects[_nftAddress][_tokenId];
         require(obj.status == 0, "status: sold or canceled");
         require(obj.startTime <= block.timestamp, "not yet for sale");
