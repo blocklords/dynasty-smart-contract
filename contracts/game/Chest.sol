@@ -210,7 +210,7 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
     * @param _r The first 32 bytes of the signature.
     * @param _s The second 32 bytes of the signature.
     */
-    function burnOrbForLRDS(bytes calldata _data, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external {
+    function burnOrbForLRDS(bytes calldata _data, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant {
         // Check if the season is not active (season has ended)
         require(!isSeasonActive(seasonId), "Season is not end");
 
