@@ -30,7 +30,7 @@ contract Duel is IERC721Receiver, Pausable, Ownable {
 
     event StartDuel(address indexed owner, uint256 indexed nftId, uint256 time);    // Event emitted when a duel is initiated
     event FinishDuel(address indexed owner, uint256 indexed nftId, uint256 time);   // Event emitted when a duel is concluded
-    event SeasonWithdrow(address indexed recipient, uint256 seasonId, uint256[] indexed nftTypeIndices, uint256[] indexed tokenIds, uint256 timestamp);  // Event emitted when a player withdraws rewards for a season
+    event SeasonWithdraw(address indexed recipient, uint256 seasonId, uint256[] indexed nftTypeIndices, uint256[] indexed tokenIds, uint256 timestamp);  // Event emitted when a player withdraws rewards for a season
     event FactorySet(address indexed factoryAddress, uint256 indexed time);         // Event emitted when the NFT Factory contract address is set
     event NftTypeAdded(address indexed NFTAddress, uint256 indexed time);           // Event emitted when a new NFT contract address is added
     
@@ -139,7 +139,7 @@ contract Duel is IERC721Receiver, Pausable, Ownable {
      * @param _r Signature data.
      * @param _s Signature data.
      */
-    function seasonWithdrow(uint256 _seasonId, bytes calldata _data, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant{
+    function seasonWithdraw(uint256 _seasonId, bytes calldata _data, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant{
         // Ensure signature has not expired
         require(_deadline >= block.timestamp, "Signature has expired");
 
@@ -172,7 +172,7 @@ contract Duel is IERC721Receiver, Pausable, Ownable {
         // Mark that the player has withdrawn rewards for this season
         withdrawnSeasonIds[msg.sender][_seasonId] = true;
 
-        emit SeasonWithdrow(msg.sender, _seasonId, nftTypeIndices, tokenIds, block.timestamp);
+        emit SeasonWithdraw(msg.sender, _seasonId, nftTypeIndices, tokenIds, block.timestamp);
     }
     
     /**
