@@ -160,6 +160,7 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
         require(_nftIds.length == 5, "Must provide exactly 5 NFT IDs");
 
         OrbNFT nft = OrbNFT(orbNft);
+        require(nft.isApprovedForAll(msg.sender, address(this)), "Contract is not approved to manage the sender's NFTs");
 
         // verify the signature and ownership of NFTs
         verifySignature(_nftIds, _quality, _deadline, _v, _r, _s);
