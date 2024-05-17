@@ -102,6 +102,8 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
         verifySignature(_data, _deadline, _v, _r, _s);
         uint256[] memory tokenIds;
         
+        nonce[msg.sender]++;
+        
         for (uint256 i = 0; i < nftTypeIndices.length; i++) {
             uint256 nftTypeIndex = nftTypeIndices[i];
 
