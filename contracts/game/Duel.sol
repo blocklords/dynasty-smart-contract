@@ -75,7 +75,7 @@ contract Duel is IERC721Receiver, Pausable, Ownable {
      * @param _r Signature data.
      * @param _s Signature data.
      */
-    function startDuel(address _from, uint256 _nftId, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant{
+    function startDuel(address _from, uint256 _nftId, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant whenNotPaused {
         require(_deadline >= block.timestamp, "Signature has expired");
         require(_nftId > 0, "Nft Id invalid");
         require(playerData[_from] == 0, "The NFT has been imported");
@@ -108,7 +108,7 @@ contract Duel is IERC721Receiver, Pausable, Ownable {
      * @param _r Signature data.
      * @param _s Signature data.
      */
-    function finishDuel(address _from, uint256 _nftId, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant{
+    function finishDuel(address _from, uint256 _nftId, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant whenNotPaused {
         require(_deadline >= block.timestamp, "Signature has expired");
         require(_nftId > 0, "Nft Id invalid");
         require(playerData[_from] == _nftId, "The nft for export is different from that for import");
@@ -139,7 +139,7 @@ contract Duel is IERC721Receiver, Pausable, Ownable {
      * @param _r Signature data.
      * @param _s Signature data.
      */
-    function seasonWithdraw(uint256 _seasonId, bytes calldata _data, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant{
+    function seasonWithdraw(uint256 _seasonId, bytes calldata _data, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant whenNotPaused {
         // Ensure signature has not expired
         require(_deadline >= block.timestamp, "Signature has expired");
 
@@ -196,7 +196,7 @@ contract Duel is IERC721Receiver, Pausable, Ownable {
      * @dev Sets the address of the verifier for signature verification.
      * @param _verifier The address of the verifier contract.
      */
-    function setVerifier (address _verifier) external onlyOwner {
+    function setVerifier(address _verifier) external onlyOwner {
         require(_verifier != address(0), "Verifier can't be zero address ");
         verifier = _verifier;
     }
@@ -213,11 +213,11 @@ contract Duel is IERC721Receiver, Pausable, Ownable {
     }
 
     function pause() public onlyOwner {
-        Pausable._pause();
+        _pause();
     }
 
     function unpause() public onlyOwner {
-        Pausable._unpause();
+        _unpause();
     }
 
     /// @dev encrypt token data

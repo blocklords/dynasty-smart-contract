@@ -59,7 +59,7 @@ contract NFTImportHub is IERC721Receiver, Pausable, Ownable {
      * @param _r ECDSA signature parameter r.
      * @param _s ECDSA signature parameter s.
      */
-	function importHeroNft(bytes calldata _data, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant {
+	function importHeroNft(bytes calldata _data, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant whenNotPaused {
         // Ensure signature has not expired
         require(_deadline >= block.timestamp, "Signature has expired");
 
@@ -91,7 +91,7 @@ contract NFTImportHub is IERC721Receiver, Pausable, Ownable {
      * @param _r ECDSA signature parameter r.
      * @param _s ECDSA signature parameter s.
      */
-	function importBannerNft(bytes calldata _data, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant {
+	function importBannerNft(bytes calldata _data, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant whenNotPaused {
         // Ensure signature has not expired
         require(_deadline >= block.timestamp, "Signature has expired");
 
@@ -135,17 +135,17 @@ contract NFTImportHub is IERC721Receiver, Pausable, Ownable {
      * @dev Sets the verifier address used for signature verification.
      * @param _verifier The new verifier address.
      */
-    function setVerifier (address _verifier) external onlyOwner {
+    function setVerifier(address _verifier) external onlyOwner {
         require(_verifier != address(0), "Verifier can't be zero address ");
         verifier = _verifier;
     }
 
     function pause() public onlyOwner {
-        Pausable._pause();
+        _pause();
     }
 
     function unpause() public onlyOwner {
-        Pausable._unpause();
+        _unpause();
     }
 
     /// @dev encrypt token data

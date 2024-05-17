@@ -85,7 +85,7 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
      * @param _r The R part of the signature.
      * @param _s The S part of the signature.
      */
-    function openChest(uint256 _seasonId, bytes calldata _data, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant{
+    function openChest(uint256 _seasonId, bytes calldata _data, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant whenNotPaused {
         require(_seasonId > 0, "Season id should be greater than 0!");
         require(isSeasonActive(_seasonId), "Season is not active");
 
@@ -149,7 +149,7 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
      * @param _r The R part of the signature.
      * @param _s The S part of the signature.
      */
-    function craftOrb(uint256 _seasonId, uint256[5] memory _nftIds, uint256 _quality, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant{
+    function craftOrb(uint256 _seasonId, uint256[5] memory _nftIds, uint256 _quality, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant whenNotPaused {
         require(_seasonId > 0, "Season id should be greater than 0!");
         require(isSeasonActive(_seasonId), "Season is not active");
         require(_quality == 6, "The mint quality can only be an orb of 6");
@@ -204,7 +204,7 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
     * @param _r The first 32 bytes of the signature.
     * @param _s The second 32 bytes of the signature.
     */
-    function burnOrbForLRDS(bytes calldata _data, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant {
+    function burnOrbForLRDS(bytes calldata _data, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant whenNotPaused {
         // Check if the season is not active (season has ended)
         require(!isSeasonActive(seasonId), "Season is not end");
 
@@ -314,18 +314,18 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
     * @dev Sets the address of the verifier contract.
     * @param _verifier The address of the new verifier contract.
     */
-    function setVerifier (address _verifier) external onlyOwner {
+    function setVerifier(address _verifier) external onlyOwner {
         require(_verifier != address(0), "Verifier can't be zero address ");
 
         verifier = _verifier;
     }
 
     function pause() public onlyOwner {
-        Pausable._pause();
+        _pause();
     }
 
     function unpause() public onlyOwner {
-        Pausable._unpause();
+        _unpause();
     }
 
     /// @dev encrypt token data

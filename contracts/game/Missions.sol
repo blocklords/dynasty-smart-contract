@@ -58,7 +58,7 @@ contract Missions is IERC721Receiver, Pausable, Ownable {
      * @param _r ECDSA signature parameter r.
      * @param _s ECDSA signature parameter s.
      */
-    function startMissions(address _from, bytes calldata _data, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant{
+    function startMissions(address _from, bytes calldata _data, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant whenNotPaused {
         (uint256 teamId, uint256[3] memory nftIds) 
             = abi.decode(_data, (uint256, uint256[3]));
 
@@ -107,7 +107,7 @@ contract Missions is IERC721Receiver, Pausable, Ownable {
      * @param _r ECDSA signature parameter r.
      * @param _s ECDSA signature parameter s.
      */
-    function finishMissions(address _from, bytes calldata _data, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant{
+    function finishMissions(address _from, bytes calldata _data, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant whenNotPaused {
         (uint256 teamId) 
             = abi.decode(_data, (uint256));
 
@@ -168,17 +168,17 @@ contract Missions is IERC721Receiver, Pausable, Ownable {
      * @dev Sets the verifier address for signature verification.
      * @param _verifier The verifier address to set.
      */
-    function setVerifier (address _verifier) external onlyOwner {
+    function setVerifier(address _verifier) external onlyOwner {
         require(_verifier != address(0), "verifier can't be zero address ");
         verifier = _verifier;
     }
 
     function pause() public onlyOwner {
-        Pausable._pause();
+        _pause();
     }
 
     function unpause() public onlyOwner {
-        Pausable._unpause();
+        _unpause();
     }
 
     /// @dev encrypt token data
