@@ -28,6 +28,7 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
     address public  orbNft;                         // Address of the Orb NFT contract
     address public  verifier;                       // Address of the verifier for signature verification
     address public  nftFactory;                     // Address of the NFT Factory contract
+    uint256 public  maxNFTsWithdrawal = 10;         // The maximum number of nft that can be obtained by opening a treasure chest
 
     struct Season {
         uint256 startTime;                          // Start time of the season
@@ -42,6 +43,7 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
     event SeasonStarted(uint256 indexed seasonId, uint256 indexed startTime, uint256 indexed endTime,uint256 time);             // Event emitted when a new season is started
     event ChestOpened(address indexed player, uint256[] indexed nftTypeIndices, uint256[] indexed tokenIds, uint256 time);      // Event emitted when a chest is opened
     event BurnOrbForLRDS(address indexed owner, uint256 indexed nftId, uint256 quality, uint256 indexed amount, uint256 time);  // Event emitted when an Orb NFT is burned for LRDS tokens
+	event SetMaxNFTsWithdrawal(uint256 indexed MaxNFTsAmount, uint256 indexed time);                                            // Event emitted when the maximum NFT withdrawal limit has been updated
 
     /**
      * @dev Initializes the Chest contract.
@@ -94,6 +96,9 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
 
         (uint256[] memory nftTypeIndices, uint256[] memory itemCodes) 
             = abi.decode(_data, (uint256[], uint256[]));
+
+        // The number of NFT mint does not exceed the set upper limit
+        require(nftTypeIndices.length <= maxNFTsWithdrawal, "Exceeds maximum allowed NFTs per withdrawal");
 
         // Validate chest data format
         require(nftTypeIndices.length == itemCodes.length, "Invalid data format");
@@ -319,6 +324,17 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
         require(_verifier != address(0), "Verifier can't be zero address ");
 
         verifier = _verifier;
+    }
+    
+    /**
+    * @dev Sets the maximum number of nft that can be obtained by opening a treasure chest.
+    * @param _maxNFTs The maximum number of NFTs allowed to be withdrawn.
+    */
+    function setMaxNFTsWithdrawal(uint256 _maxNFTs) external onlyOwner {
+        require(_maxNFTs > 0, "Maximum NFTs withdrawal must be greater than zero");
+        maxNFTsWithdrawal = _maxNFTs;
+        
+		emit SetMaxNFTsWithdrawal(_maxNFTs, block.timestamp);	  
     }
 
     function pause() public onlyOwner {

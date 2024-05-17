@@ -18,10 +18,11 @@ import "./../nfts/NftFactory.sol";
  */
 
 contract Duel is IERC721Receiver, Pausable, Ownable {
-    bool    private lock;          // Reentrancy guard
-    address public  heroNft;       // Address of the hero NFT contract
-    address public  verifier;      // Address of the verifier for signature verification
-    address public  nftFactory;    // Address of the NFT Factory contract
+    bool    private lock;                       // Reentrancy guard
+    address public  heroNft;                    // Address of the hero NFT contract
+    address public  verifier;                   // Address of the verifier for signature verification
+    address public  nftFactory;                 // Address of the NFT Factory contract
+    uint256 public  maxNFTsWithdrawal = 4;     // Maximum number of NFTs allowed to be withdrawn in a season
 
     mapping(address => uint256) public playerData;                          // Player data tracking the hero NFT being used in a duel
     mapping(address => uint256) public nonce;                               // Nonce for signature verification
@@ -33,6 +34,7 @@ contract Duel is IERC721Receiver, Pausable, Ownable {
     event SeasonWithdraw(address indexed recipient, uint256 seasonId, uint256[] indexed nftTypeIndices, uint256[] indexed tokenIds, uint256 timestamp);  // Event emitted when a player withdraws rewards for a season
     event FactorySet(address indexed factoryAddress, uint256 indexed time);         // Event emitted when the NFT Factory contract address is set
     event NftTypeAdded(address indexed NFTAddress, uint256 indexed time);           // Event emitted when a new NFT contract address is added
+	event SetMaxNFTsWithdrawal(uint256 indexed MaxNFTsAmount, uint256 indexed time);// Event emitted when the maximum NFT withdrawal limit has been updated
     
     /**
      * @dev Constructor function to initialize the Duel contract.
@@ -149,6 +151,9 @@ contract Duel is IERC721Receiver, Pausable, Ownable {
         (uint256[] memory nftTypeIndices, uint256[] memory tokenIds) 
             = abi.decode(_data, (uint256[], uint256[]));
 
+        // The number of NFT mint does not exceed the set upper limit
+        require(nftTypeIndices.length <= maxNFTsWithdrawal, "Exceeds maximum allowed NFTs per withdrawal");
+
         // Validate chest data format
         require(nftTypeIndices.length == tokenIds.length, "Invalid data format");
         
@@ -210,6 +215,17 @@ contract Duel is IERC721Receiver, Pausable, Ownable {
 		nftFactory =_address;
 
 		emit FactorySet(_address, block.timestamp);	    
+    }
+
+    /**
+    * @dev Sets the maximum number of NFTs allowed to be withdrawn in a season.
+    * @param _maxNFTs The maximum number of NFTs allowed to be withdrawn.
+    */
+    function setMaxNFTsWithdrawal(uint256 _maxNFTs) external onlyOwner {
+        require(_maxNFTs > 0, "Maximum NFTs withdrawal must be greater than zero");
+        maxNFTsWithdrawal = _maxNFTs;
+        
+		emit SetMaxNFTsWithdrawal(_maxNFTs, block.timestamp);	  
     }
 
     function pause() public onlyOwner {
