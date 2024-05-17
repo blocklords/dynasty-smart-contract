@@ -25,17 +25,17 @@ contract NftFactory is AccessControl, Ownable {
     HeroNFT   private heroNft;   // Instance of the HeroNFT contract
     BannerNFT private bannerNft; // Instance of the BannerNFT contract
 
-    event AdminAdded(address indexed admin, uint256 indexed time);                      // An admin is added.
-    event AdminRemoved(address indexed admin, uint256 indexed time);                    // An admin is removed.
-    event SetOrbNft(address indexed orbNft, uint256 indexed time);                      // The OrbNFT contract address is set.
-    event SetHeroNft(address indexed heroNft, uint256 indexed time);                    // The HeroNFT contract address is set.
-    event SetBannerNft(address indexed bannerNft, uint256 indexed time);                // The BannerNFT contract address is set.
-    event OrbGeneratorAdded(address indexed OrbGenerator, uint256 indexed time);        // An account is granted the Orb Generator role.
-    event OrbGeneratorRemoved(address indexed OrbGenerator, uint256 indexed time);      // An account is removed from the Orb Generator role.
-    event HeroGeneratorAdded(address indexed OrbGenerator, uint256 indexed time);       // An account is granted the Hero Generator role.
-    event HeroGeneratorRemoved(address indexed OrbGenerator, uint256 indexed time);     // An account is removed from the Hero Generator role.
-    event BannerGeneratorAdded(address indexed OrbGenerator, uint256 indexed time);     // An account is granted the Banner Generator role.
-    event BannerGeneratorRemoved(address indexed OrbGenerator, uint256 indexed time);   // An account is removed from the Banner Generator role.
+    event AdminAdded(address indexed owner, address indexed admin, uint256 indexed time);                      // An admin is added.
+    event AdminRemoved(address indexed owner, address indexed admin, uint256 indexed time);                    // An admin is removed.
+    event SetOrbNft(address indexed admin, address indexed orbNft, uint256 indexed time);                      // The OrbNFT contract address is set.
+    event SetHeroNft(address indexed admin, address indexed heroNft, uint256 indexed time);                    // The HeroNFT contract address is set.
+    event SetBannerNft(address indexed admin, address indexed bannerNft, uint256 indexed time);                // The BannerNFT contract address is set.
+    event OrbGeneratorAdded(address indexed admin, address indexed OrbGenerator, uint256 indexed time);        // An account is granted the Orb Generator role.
+    event OrbGeneratorRemoved(address indexed admin, address indexed OrbGenerator, uint256 indexed time);      // An account is removed from the Orb Generator role.
+    event HeroGeneratorAdded(address indexed admin, address indexed OrbGenerator, uint256 indexed time);       // An account is granted the Hero Generator role.
+    event HeroGeneratorRemoved(address indexed admin, address indexed OrbGenerator, uint256 indexed time);     // An account is removed from the Hero Generator role.
+    event BannerGeneratorAdded(address indexed admin, address indexed OrbGenerator, uint256 indexed time);     // An account is granted the Banner Generator role.
+    event BannerGeneratorRemoved(address indexed admin, address indexed OrbGenerator, uint256 indexed time);   // An account is removed from the Banner Generator role.
 
     /**
      * @dev Initializes the NftFactory contract.
@@ -137,7 +137,7 @@ contract NftFactory is AccessControl, Ownable {
     function addAdmin(address _account) external virtual onlyOwner {
         grantRole(DEFAULT_ADMIN_ROLE, _account);
 
-        emit AdminAdded(_account, block.timestamp);
+        emit AdminAdded(msg.sender, _account, block.timestamp);
     }
 
     /**
@@ -146,9 +146,10 @@ contract NftFactory is AccessControl, Ownable {
     * @param _account The address to be removed from the admin role.
     */
     function removeAdmin(address _account) external virtual onlyOwner {
+        require(_account != owner(), "Cannot remove contract owner as admin");
 	    renounceRole(DEFAULT_ADMIN_ROLE, _account);
         
-        emit AdminRemoved(_account, block.timestamp);
+        emit AdminRemoved(msg.sender, _account, block.timestamp);
     }
 
     /**
@@ -172,7 +173,7 @@ contract NftFactory is AccessControl, Ownable {
         require(_orbNft != address(0), "orb nft can't be zero address");
 	    orbNft = OrbNFT(_orbNft);
 
-        emit SetOrbNft(_orbNft, block.timestamp);
+        emit SetOrbNft(msg.sender, _orbNft, block.timestamp);
     }
 
     /**
@@ -184,7 +185,7 @@ contract NftFactory is AccessControl, Ownable {
         require(_heroNft != address(0), "hero nft can't be zero address");
 	    heroNft = HeroNFT(_heroNft);
 
-        emit SetHeroNft(_heroNft, block.timestamp);
+        emit SetHeroNft(msg.sender, _heroNft, block.timestamp);
     }
 
     /**
@@ -196,7 +197,7 @@ contract NftFactory is AccessControl, Ownable {
         require(_bannerNft != address(0), "banner nft can't be zero address");
 	    bannerNft = BannerNFT(_bannerNft);
 
-        emit SetBannerNft(_bannerNft, block.timestamp);
+        emit SetBannerNft(msg.sender, _bannerNft, block.timestamp);
     }
 
     /**
@@ -207,7 +208,7 @@ contract NftFactory is AccessControl, Ownable {
     function addHeroGenerator(address _account) external virtual onlyAdmin {
 	    grantRole(HERO_GENERATOR_ROLE, _account);
 
-        emit HeroGeneratorAdded(_account, block.timestamp);
+        emit HeroGeneratorAdded(msg.sender, _account, block.timestamp);
     }
 
     /**
@@ -218,7 +219,7 @@ contract NftFactory is AccessControl, Ownable {
     function removeHeroGenerator(address _account) external virtual onlyAdmin {
 	    revokeRole(HERO_GENERATOR_ROLE, _account);
 
-        emit HeroGeneratorRemoved(_account, block.timestamp);
+        emit HeroGeneratorRemoved(msg.sender, _account, block.timestamp);
     }
 
     /**
@@ -238,7 +239,7 @@ contract NftFactory is AccessControl, Ownable {
     function addBannerGenerator(address _account) external virtual onlyAdmin {
 	    grantRole(BANNER_GENERATOR_ROLE, _account);
 
-        emit BannerGeneratorAdded(_account, block.timestamp);
+        emit BannerGeneratorAdded(msg.sender, _account, block.timestamp);
     }
 
     /**
@@ -249,7 +250,7 @@ contract NftFactory is AccessControl, Ownable {
     function removeBannerGenerator(address _account) external virtual onlyAdmin {
 	    revokeRole(BANNER_GENERATOR_ROLE, _account);
 
-        emit BannerGeneratorRemoved(_account, block.timestamp);
+        emit BannerGeneratorRemoved(msg.sender, _account, block.timestamp);
     }
 
     /**
@@ -269,7 +270,7 @@ contract NftFactory is AccessControl, Ownable {
     function addOrbGenerator(address _account) external virtual onlyAdmin {
 	    grantRole(ORB_GENERATOR_ROLE, _account);
 
-        emit OrbGeneratorAdded(_account, block.timestamp);
+        emit OrbGeneratorAdded(msg.sender, _account, block.timestamp);
     }
 
     /**
@@ -280,7 +281,7 @@ contract NftFactory is AccessControl, Ownable {
     function removeOrbGenerator(address _account) external virtual onlyAdmin {
 	    revokeRole(ORB_GENERATOR_ROLE, _account);
 
-        emit OrbGeneratorRemoved(_account, block.timestamp);
+        emit OrbGeneratorRemoved(msg.sender, _account, block.timestamp);
     }
 
     /**
