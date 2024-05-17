@@ -52,7 +52,7 @@ contract NFTImportHub is IERC721Receiver, Pausable, Ownable {
     }
 
     /**
-     * @dev Imports Hero NFTs based on the provided data and signature.
+     * @dev Import the hero nft to the specified address, the backend listens for events,and the burned hero is displayed in the game.
      * @param _data Encoded data containing the IDs of Hero NFTs to import.
      * @param _deadline Expiry timestamp for the signature.
      * @param _v ECDSA signature parameter v.
@@ -84,7 +84,7 @@ contract NFTImportHub is IERC721Receiver, Pausable, Ownable {
 	}
 
     /**
-     * @dev Imports Banner NFTs based on the provided data and signature.
+     * @dev Import the banner nft to the specified address, the backend listens for events,and the burned banner is displayed in the game.
      * @param _data Encoded data containing the IDs of Banner NFTs to import.
      * @param _deadline Expiry timestamp for the signature.
      * @param _v ECDSA signature parameter v.
