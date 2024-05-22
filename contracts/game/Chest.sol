@@ -197,7 +197,7 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
         uint256 mintedNftId = 0;
         nonce[msg.sender]++;
 
-        mintedNftId = nft.mint(msg.sender, _quality);
+        mintedNftId = NftFactory(nftFactory).mintOrb(msg.sender, _quality);
 
         emit CraftOrb(msg.sender, mintedNftId, _quality, block.timestamp);
     }
