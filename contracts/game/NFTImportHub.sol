@@ -15,10 +15,12 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 contract NFTImportHub is IERC721Receiver, Pausable, Ownable {
 
-    bool    private lock;                      // Reentrancy guard
-    address public  heroNft;                   // Address of the Hero NFT contract
-    address public  bannerNft;                 // Address of the Banner NFT contract
-    address public  verifier;                  // Address of the verifier for signature verification
+    uint256 public constant EXPECTED_DATA_LENGTH = 160;     // Expected length of the data, used for validating incoming data
+
+    bool    private lock;                                   // Reentrancy guard
+    address public  heroNft;                                // Address of the Hero NFT contract
+    address public  bannerNft;                              // Address of the Banner NFT contract
+    address public  verifier;                               // Address of the verifier for signature verification
 
     mapping(address => uint256) public nonce;  // Nonce for signature verification
 
@@ -63,11 +65,14 @@ contract NFTImportHub is IERC721Receiver, Pausable, Ownable {
         // Ensure signature has not expired
         require(_deadline >= block.timestamp, "Signature has expired");
 
+        // Check data consistency
+        require(_data.length == EXPECTED_DATA_LENGTH, "Invalid data length");
+
         // Decode the data containing NFT IDs
         (uint256[] memory _nft) = abi.decode(_data, (uint256[]));
 
         // Ensure correct length of NFT IDs
-        require(_nft.length == 5, "Incorrect length of NFT IDs");
+        require(_nft.length == 5, "Incorrect NFT length");
 
         // Verify the signature
         verifySignature(_data, _deadline, _v, _r, _s);
@@ -98,11 +103,14 @@ contract NFTImportHub is IERC721Receiver, Pausable, Ownable {
         // Ensure signature has not expired
         require(_deadline >= block.timestamp, "Signature has expired");
 
+        // Check data consistency
+        require(_data.length == EXPECTED_DATA_LENGTH, "Invalid data length");
+
         // Decode the data containing NFT IDs
         (uint256[] memory _nft) = abi.decode(_data, (uint256[]));
 
         // Ensure correct length of NFT IDs
-        require(_nft.length == 5, "Incorrect length of NFT IDs");
+        require(_nft.length == 5, "Incorrect NFT length");
 
         // Verify the signature
         verifySignature(_data, _deadline, _v, _r, _s);
