@@ -231,8 +231,10 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
         verifySignature(nftId, quality, amount, _deadline, _v, _r, _s);
 
         nonce[msg.sender]++;
+        // Burn nft to get LRDS in the game. can redeem ERC20 LRDS in the game
         nft.safeTransferFrom(msg.sender, 0x000000000000000000000000000000000000dEaD, nftId);
 
+        // The number of nft burned and the number of lrds gained by burning events are added to the game.
         emit BurnOrbForLRDS(msg.sender, nftId, quality, amount, block.timestamp);
     }
 
