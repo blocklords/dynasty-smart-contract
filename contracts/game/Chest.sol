@@ -222,14 +222,16 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
 
         require(amount > 0, "Amount should be greater than 0");
 
+        // burn the Orb NFT if the caller is its owner
+        OrbNFT nft = OrbNFT(orbNft);
+        require(nft.isApprovedForAll(msg.sender, address(this)), "Contract is not approved to manage the sender's NFTs");
+        require(nft.ownerOf(nftId) == msg.sender, "Not the nft owner");
+        require(nft.quality(nftId) == quality, "The quality of the nft to be burned is not correct");
+
         verifySignature(nftId, quality, amount, _deadline, _v, _r, _s);
 
-         // burn the Orb NFT if the caller is its owner
-        OrbNFT nft = OrbNFT(orbNft);
-        require(nft.ownerOf(nftId) == msg.sender, "Not the nft owner");
-
         nonce[msg.sender]++;
-        nft.burn(nftId);
+        nft.safeTransferFrom(msg.sender, 0x000000000000000000000000000000000000dEaD, nftId);
 
         emit BurnOrbForLRDS(msg.sender, nftId, quality, amount, block.timestamp);
     }
