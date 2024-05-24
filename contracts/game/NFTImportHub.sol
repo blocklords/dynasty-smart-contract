@@ -64,7 +64,10 @@ contract NFTImportHub is IERC721Receiver, Pausable, Ownable {
         require(_deadline >= block.timestamp, "Signature has expired");
 
         // Decode the data containing NFT IDs
-        (uint256[5] memory _nft) = abi.decode(_data, (uint256[5]));
+        (uint256[] memory _nft) = abi.decode(_data, (uint256[]));
+
+        // Ensure correct length of NFT IDs
+        require(_nft.length == 5, "Incorrect length of NFT IDs");
 
         // Verify the signature
         verifySignature(_data, _deadline, _v, _r, _s);
@@ -96,7 +99,10 @@ contract NFTImportHub is IERC721Receiver, Pausable, Ownable {
         require(_deadline >= block.timestamp, "Signature has expired");
 
         // Decode the data containing NFT IDs
-        (uint256[5] memory _nft) = abi.decode(_data, (uint256[5]));
+        (uint256[] memory _nft) = abi.decode(_data, (uint256[]));
+
+        // Ensure correct length of NFT IDs
+        require(_nft.length == 5, "Incorrect length of NFT IDs");
 
         // Verify the signature
         verifySignature(_data, _deadline, _v, _r, _s);
