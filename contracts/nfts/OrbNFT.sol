@@ -90,7 +90,7 @@ contract OrbNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
             bytes32 hash            = keccak256(abi.encodePacked(prefix, message));
             address recover         = ecrecover(hash, _v, _r, _s);
 
-            require(recover == verifier, "Verification failed about mint hero nft");
+            require(recover == verifier, "Verification failed about mint orb nft");
         }
 
         uint256 _tokenId = nextTokenId++;

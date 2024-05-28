@@ -212,7 +212,7 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
     */
     function burnOrbForLRDS(bytes calldata _data, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant whenNotPaused {
         // Check if the season is not active (season has ended)
-        require(!isSeasonActive(seasonId), "Season is not end");
+        require(!isSeasonActive(seasonId) && seasonId > 0, "Season is not end");
 
         // Ensure signature has not expired
         require(_deadline >= block.timestamp, "Signature has expired");
