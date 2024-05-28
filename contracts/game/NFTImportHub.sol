@@ -15,8 +15,6 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 contract NFTImportHub is IERC721Receiver, Pausable, Ownable {
 
-    uint256 public constant EXPECTED_DATA_LENGTH = 160;     // Expected length of the data, used for validating incoming data
-
     bool    private lock;                                   // Reentrancy guard
     address public  heroNft;                                // Address of the Hero NFT contract
     address public  bannerNft;                              // Address of the Banner NFT contract
@@ -65,9 +63,6 @@ contract NFTImportHub is IERC721Receiver, Pausable, Ownable {
         // Ensure signature has not expired
         require(_deadline >= block.timestamp, "Signature has expired");
 
-        // Check data consistency
-        require(_data.length == EXPECTED_DATA_LENGTH, "Invalid data length");
-
         // Decode the data containing NFT IDs
         (uint256[] memory _nft) = abi.decode(_data, (uint256[]));
 
@@ -102,9 +97,6 @@ contract NFTImportHub is IERC721Receiver, Pausable, Ownable {
 	function importBannerNft(bytes calldata _data, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant whenNotPaused {
         // Ensure signature has not expired
         require(_deadline >= block.timestamp, "Signature has expired");
-
-        // Check data consistency
-        require(_data.length == EXPECTED_DATA_LENGTH, "Invalid data length");
 
         // Decode the data containing NFT IDs
         (uint256[] memory _nft) = abi.decode(_data, (uint256[]));
