@@ -41,7 +41,7 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
 
     event CraftOrb(address indexed owner, uint256 indexed nftId, uint256 indexed quality, uint256 time);                        // Event emitted when an NFT is minted
     event SeasonStarted(uint256 indexed seasonId, uint256 indexed startTime, uint256 indexed endTime,uint256 time);             // Event emitted when a new season is started
-    event ChestOpened(address indexed player, uint256[] indexed nftTypeIndices, uint256[] indexed tokenIds, uint256 time);      // Event emitted when a chest is opened
+    event ChestOpened(address indexed player, uint256[] nftTypeIndices, uint256[] tokenIds, uint256 time);                      // Event emitted when a chest is opened
     event BurnOrbForLRDS(address indexed owner, uint256 indexed nftId, uint256 quality, uint256 indexed amount, uint256 time);  // Event emitted when an Orb NFT is burned for LRDS tokens
 	event SetMaxNFTsWithdrawal(uint256 indexed MaxNFTsAmount, uint256 indexed time);                                            // Event emitted when the maximum NFT withdrawal limit has been updated
 
@@ -145,7 +145,7 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
     }
 
     /**
-     * @dev Crafts a Mythic Orb NFT by sacrificing five different Orbs of qualities 1 to 5.
+     * @dev Create a orb NFT by sacrificing 5 orbs.
      * @param _seasonId The ID of the current season.
      * @param _nftIds The IDs of the NFTs used for crafting the Orb.
      * @param _quality The quality of the crafted Orb.
@@ -157,7 +157,6 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
     function craftOrb(uint256 _seasonId, uint256[5] memory _nftIds, uint256 _quality, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant whenNotPaused {
         require(_seasonId > 0, "Season id should be greater than 0!");
         require(isSeasonActive(_seasonId), "Season is not active");
-        require(_quality == 6, "The mint quality can only be an orb of 6");
         
         // Ensure signature has not expired
         require(_deadline >= block.timestamp, "Signature has expired");
@@ -170,27 +169,16 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
         // verify the signature and ownership of NFTs
         verifySignature(_nftIds, _quality, _deadline, _v, _r, _s);
 
-        // track counts of each quality (1 to 5)
-        uint256[5] memory qualityCounts;
-
-        // verify ownership and count qualities
+        // verify ownership
         for (uint256 i = 0; i < 5; i++) {
             require(nft.ownerOf(_nftIds[i]) == msg.sender, "Not the nft owner");
             uint256 nftQuality = nft.quality(_nftIds[i]);
             require(nftQuality >= 1 && nftQuality <= 5, "NFT quality must be between 1 and 5");
-            qualityCounts[nftQuality - 1]++; // Increment count for this quality
         }
-            
-        // ensure exactly one of each quality (1 to 5)
-        require(qualityCounts[0] == 1, "Missing NFT with quality 1");
-        require(qualityCounts[1] == 1, "Missing NFT with quality 2");
-        require(qualityCounts[2] == 1, "Missing NFT with quality 3");
-        require(qualityCounts[3] == 1, "Missing NFT with quality 4");
-        require(qualityCounts[4] == 1, "Missing NFT with quality 5");
 
         // burn the NFTs of qualities 1 to 5
         for (uint256 i = 0; i < 5; i++) {
-            nft.burn(_nftIds[i]);
+            nft.safeTransferFrom(msg.sender, 0x000000000000000000000000000000000000dEaD, _nftIds[i]);
         }
 
         // mint a new Orb NFT with the specified quality
