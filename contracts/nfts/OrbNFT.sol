@@ -23,9 +23,10 @@ contract OrbNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
     
     mapping(uint256 => uint256) public quality;        // Mapping from token ID to quality (tokenId => quality), quality represented by numbers (1 to 6)
     mapping(uint256 => uint256) public qualityLimit;   // Mapping from quality to quality limits (maximum supply per quality)
-    mapping(address => uint256) public nonce;          // Mapping from address to nonce for signature verification
+    mapping(address => uint256) public nonce;          // Mapping from address to nonce for signature 
+    mapping(uint256 => uint256) public receiptId;      // Mapping from receipt Id to Orb NFT id
 
-    event Minted(address indexed to, uint256 indexed tokenId, uint256 indexed quality, uint256 time);   // Event emitted when a new token is minted
+    event Minted(address indexed to, uint256 indexed tokenId, uint256 indexed quality, uint256 time);           // Event emitted when a new token is minted
     event SetFactory(address indexed factory, uint256 indexed time);                                            // Event emitted when the factory address is set
     event SetVerifier(address indexed verifier, uint256 indexed time);                                          // Event emitted when the verifier address is set
     event Burned(address indexed owner, uint256 indexed tokenId, uint256 indexed quality, uint256 time);        // Event emitted when a token is burned
@@ -72,6 +73,7 @@ contract OrbNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
     /**
      * @dev Safely mints a new Orb NFT.
      * @param _to Address to mint the token to.
+     * @param _receiptId from receipt Id to Orb NFT id.
      * @param _quality Quality of the orb to mint.
      * @param _deadline Expiry timestamp for the signature.
      * @param _v ECDSA signature parameter v.
@@ -79,14 +81,15 @@ contract OrbNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
      * @param _s ECDSA signature parameter s.
      * @return The ID of the minted token.
      */
-    function safeMint(address _to, uint256 _quality, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant returns (uint256) {
+    function safeMint(address _to, uint256 _quality, uint256 _receiptId, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant returns (uint256) {
         require(_quality >= 1 && _quality <= 6, "Invalid quality");
         require(_deadline >= block.timestamp, "Signature has expired");
         require(qualityLimit[_quality] > 0, "Quality has reached its limit");
+        require(receiptId[_receiptId] == 0, "Bl Number existed");
 
         {
             bytes memory prefix     = "\x19Ethereum Signed Message:\n32";
-            bytes32 message         = keccak256(abi.encodePacked(_to, _quality, address(this), nonce[_to], _deadline, block.chainid));
+            bytes32 message         = keccak256(abi.encodePacked(_to, _quality, _receiptId, address(this), nonce[_to], _deadline, block.chainid));
             bytes32 hash            = keccak256(abi.encodePacked(prefix, message));
             address recover         = ecrecover(hash, _v, _r, _s);
 
@@ -98,6 +101,7 @@ contract OrbNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
         // decrease quality limit
         qualityLimit[_quality]--;
         quality[_tokenId] = _quality;
+        receiptId[_receiptId] = _tokenId;
         nonce[_to]++;
 
         _safeMint(_to, _tokenId);
@@ -111,17 +115,20 @@ contract OrbNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
      * @dev Mints a new Orb NFT.
      * @param _to Address to mint the token to.
      * @param _quality Quality of the orb to mint.
+     * @param _receiptId from receipt Id to Orb NFT id.
      * @return The ID of the minted token.
      */
-    function mint(address _to, uint256 _quality) external onlyFactory nonReentrant returns (uint256) {
+    function mint(address _to, uint256 _quality, uint256 _receiptId) external onlyFactory nonReentrant returns (uint256) {
         require(_quality >= 1 && _quality <= 6, "Invalid quality");
         require(qualityLimit[_quality] > 0, "Quality has reached its limit");
+        require(receiptId[_receiptId] == 0, "receipt Id existed");
 
         uint256 _tokenId = nextTokenId++;
 
         // decrease quality limit
         qualityLimit[_quality]--;
         quality[_tokenId] = _quality;
+        receiptId[_receiptId] = _tokenId;
         nonce[_to]++;
 
         _safeMint(_to, _tokenId);

@@ -120,10 +120,11 @@ contract NftFactory is AccessControl, Ownable {
      * Can only be called by accounts with the Orb NFT generator role.
      * @param _to The address to which the newly minted Orb NFT will be assigned.
      * @param _quality The quality of the Orb NFT to be minted.
+     * @param _receiptId from receipt Id to Orb NFT id.
      * @return The ID of the newly minted Orb NFT.
      */
-    function mintOrb(address _to, uint256 _quality) external onlyOrbGenerator returns(uint256) {
-	    return orbNft.mint(_to, _quality);
+    function mintOrb(address _to, uint256 _quality, uint256 _receiptId) external onlyOrbGenerator returns(uint256) {
+	    return orbNft.mint(_to, _quality, _receiptId);
     }
 
     //--------------------------------------------------

@@ -94,14 +94,14 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
         // Ensure signature has not expired
         require(_deadline >= block.timestamp, "Signature has expired");
 
-        (uint256[] memory nftTypeIndices, uint256[] memory itemCodes) 
-            = abi.decode(_data, (uint256[], uint256[]));
+        (uint256[] memory nftTypeIndices, uint256[] memory itemCodes, uint256[] memory receiptIds) 
+            = abi.decode(_data, (uint256[], uint256[], uint256[]));
 
         // The number of NFT mint does not exceed the set upper limit
         require(nftTypeIndices.length <= maxNFTsWithdrawal, "Exceeds maximum allowed NFTs per withdrawal");
 
         // Validate chest data format
-        require(nftTypeIndices.length == itemCodes.length, "Invalid data format");
+        require(nftTypeIndices.length == itemCodes.length && itemCodes.length ==  receiptIds.length, "Invalid data format");
         
         // Verify signature
         verifySignature(_data, _deadline, _v, _r, _s);
@@ -112,9 +112,10 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
         for (uint256 i = 0; i < nftTypeIndices.length; i++) {
             uint256 nftTypeIndex = nftTypeIndices[i];
 
-            uint256 itemCode = itemCodes[i];
+            uint256 itemCode  = itemCodes[i];
+            uint256 receiptId = receiptIds[i];
 
-            tokenIds[i] = _mint(nftTypeIndex, itemCode);
+            tokenIds[i] = _mint(nftTypeIndex, itemCode, receiptId);
         }
 
         emit ChestOpened(msg.sender, nftTypeIndices, tokenIds, block.timestamp);
@@ -123,10 +124,10 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
     /**
     * @dev Internal function to mint an NFT of a specific type based on the provided index and item codes.
     * @param _nftTypeIndex The index representing the type of NFT to be minted.
-    * @param _itemCodes The item codes required for minting the NFT (tokenId or quality).
+    * @param _itemCode The item codes required for minting the NFT (tokenId or quality).
     * @return The ID of the minted NFT.
     */
-    function _mint(uint256 _nftTypeIndex, uint256 _itemCodes) internal returns (uint256) {
+    function _mint(uint256 _nftTypeIndex, uint256 _itemCode, uint256 _receiptId) internal returns (uint256) {
             address nftContract = nftTypes[_nftTypeIndex];
             require(nftContract != address(0), "Unsupported NFT type");
             
@@ -134,11 +135,11 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
 
             // Depending on the NFT type index, mint the corresponding type of NFT using the NFT Factory contract
             if(_nftTypeIndex == 0){
-                tokenId = NftFactory(nftFactory).mintHero(msg.sender, _itemCodes);     //mint hero nft
+                tokenId = NftFactory(nftFactory).mintHero(msg.sender, _itemCode);     //mint hero nft
             } else if(_nftTypeIndex == 1){
-                tokenId = NftFactory(nftFactory).mintBanner(msg.sender, _itemCodes);   //mint banner nft
+                tokenId = NftFactory(nftFactory).mintBanner(msg.sender, _itemCode);   //mint banner nft
             } else if(_nftTypeIndex == 2){
-                tokenId = NftFactory(nftFactory).mintOrb(msg.sender, _itemCodes);      //mint orb nft
+                tokenId = NftFactory(nftFactory).mintOrb(msg.sender, _itemCode, _receiptId);      //mint orb nft
             }
 
             return tokenId; // Return the ID of the minted NFT
@@ -149,12 +150,13 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
      * @param _seasonId The ID of the current season.
      * @param _nftIds The IDs of the NFTs used for crafting the Orb.
      * @param _quality The quality of the crafted Orb.
+     * @param _receiptId from receipt Id to Orb NFT id.
      * @param _deadline The deadline for the signature.
      * @param _v The recovery ID.
      * @param _r The R part of the signature.
      * @param _s The S part of the signature.
      */
-    function craftOrb(uint256 _seasonId, uint256[5] memory _nftIds, uint256 _quality, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant whenNotPaused {
+    function craftOrb(uint256 _seasonId, uint256[5] memory _nftIds, uint256 _quality, uint256 _receiptId, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant whenNotPaused {
         require(_seasonId > 0, "Season id should be greater than 0!");
         require(isSeasonActive(_seasonId), "Season is not active");
         
@@ -167,7 +169,7 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
         require(nft.isApprovedForAll(msg.sender, address(this)), "Contract is not approved to manage the sender's NFTs");
 
         // verify the signature and ownership of NFTs
-        verifySignature(_nftIds, _quality, _deadline, _v, _r, _s);
+        verifySignature(_nftIds, _quality, _receiptId, _deadline, _v, _r, _s);
 
         // verify ownership
         for (uint256 i = 0; i < 5; i++) {
@@ -185,7 +187,7 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
         uint256 mintedNftId = 0;
         nonce[msg.sender]++;
 
-        mintedNftId = NftFactory(nftFactory).mintOrb(msg.sender, _quality);
+        mintedNftId = NftFactory(nftFactory).mintOrb(msg.sender, _quality, _receiptId);
 
         emit CraftOrb(msg.sender, mintedNftId, _quality, block.timestamp);
     }
@@ -247,14 +249,15 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
     * @dev Verifies a signature for crafting an Orb.
     * @param _nftIds An array containing the IDs of the NFTs used for crafting.
     * @param _quality The quality of the Mythic Orb to be crafted.
+    * @param _receiptId from receipt Id to Orb NFT id.
     * @param _deadline The timestamp by which the signature must be submitted.
     * @param _v The recovery byte of the signature.
     * @param _r The first 32 bytes of the signature.
     * @param _s The second 32 bytes of the signature.
     */
-    function verifySignature(uint256[5] memory _nftIds, uint256 _quality, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) internal view {
+    function verifySignature(uint256[5] memory _nftIds, uint256 _quality, uint256 _receiptId, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) internal view {
         bytes memory prefix = "\x19Ethereum Signed Message:\n32";
-        bytes32 message = keccak256(abi.encodePacked(msg.sender, _nftIds, _quality, _deadline, address(this), nonce[msg.sender], block.chainid));
+        bytes32 message = keccak256(abi.encodePacked(msg.sender, _nftIds, _quality, _receiptId, _deadline, address(this), nonce[msg.sender], block.chainid));
         bytes32 hash = keccak256(abi.encodePacked(prefix, message));
         address recover = ecrecover(hash, _v, _r, _s);
         require(recover == verifier, "Verification failed about craft Orb");
