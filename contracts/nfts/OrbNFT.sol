@@ -26,10 +26,10 @@ contract OrbNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
     mapping(address => uint256) public nonce;          // Mapping from address to nonce for signature 
     mapping(uint256 => uint256) public receiptId;      // Mapping from receipt Id to Orb NFT id
 
-    event Minted(address indexed to, uint256 indexed tokenId, uint256 indexed quality, uint256 time);           // Event emitted when a new token is minted
-    event SetFactory(address indexed factory, uint256 indexed time);                                            // Event emitted when the factory address is set
-    event SetVerifier(address indexed verifier, uint256 indexed time);                                          // Event emitted when the verifier address is set
-    event Burned(address indexed owner, uint256 indexed tokenId, uint256 indexed quality, uint256 time);        // Event emitted when a token is burned
+    event Minted(address indexed to, uint256 indexed tokenId, uint256 indexed quality, uint256 receiptId, uint256 time);    // Event emitted when a new token is minted
+    event SetFactory(address indexed factory, uint256 indexed time);                                                        // Event emitted when the factory address is set
+    event SetVerifier(address indexed verifier, uint256 indexed time);                                                      // Event emitted when the verifier address is set
+    event Burned(address indexed owner, uint256 indexed tokenId, uint256 indexed quality, uint256 time);                    // Event emitted when a token is burned
 
     /**
      * @dev Contract constructor
@@ -106,7 +106,7 @@ contract OrbNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
 
         _safeMint(_to, _tokenId);
         
-        emit Minted(_to, _tokenId, _quality, block.timestamp);
+        emit Minted(_to, _tokenId, _quality, _receiptId, block.timestamp);
         return _tokenId;
     }
 
@@ -133,7 +133,7 @@ contract OrbNFT is ERC721, ERC721Burnable, ERC721Enumerable, Ownable {
 
         _safeMint(_to, _tokenId);
         
-        emit Minted(_to, _tokenId, _quality, block.timestamp);
+        emit Minted(_to, _tokenId, _quality, _receiptId, block.timestamp);
         return _tokenId;
     }
 
