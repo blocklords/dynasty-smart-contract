@@ -39,11 +39,11 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
     mapping(address => uint256) public nonce;       // Nonce for signature verification
     mapping(uint256 => address) public nftTypes;    // Mapping of NFT type indices to their contracts
 
-    event CraftOrb(address indexed owner, uint256 indexed nftId, uint256 indexed quality, uint256 time);                        // Event emitted when an NFT is minted
-    event SeasonStarted(uint256 indexed seasonId, uint256 indexed startTime, uint256 indexed endTime,uint256 time);             // Event emitted when a new season is started
-    event ChestOpened(address indexed player, uint256[] nftTypeIndices, uint256[] tokenIds, uint256 time);                      // Event emitted when a chest is opened
-    event BurnOrbForLRDS(address indexed owner, uint256 indexed nftId, uint256 quality, uint256 indexed amount, uint256 time);  // Event emitted when an Orb NFT is burned for LRDS tokens
-	event SetMaxNFTsWithdrawal(uint256 indexed MaxNFTsAmount, uint256 indexed time);                                            // Event emitted when the maximum NFT withdrawal limit has been updated
+    event CraftOrb(address indexed owner, uint256 indexed nftId, uint256 indexed quality, uint256 receiptId, uint256 time);           // Event emitted when an NFT is minted
+    event SeasonStarted(uint256 indexed seasonId, uint256 indexed startTime, uint256 indexed endTime,uint256 time);                   // Event emitted when a new season is started
+    event ChestOpened(address indexed player, uint256[] nftTypeIndices, uint256[] tokenIds, uint256[] receiptIds, uint256 time);      // Event emitted when a chest is opened
+    event BurnOrbForLRDS(address indexed owner, uint256 indexed nftId, uint256 quality, uint256 indexed amount, uint256 time);        // Event emitted when an Orb NFT is burned for LRDS tokens
+	event SetMaxNFTsWithdrawal(uint256 indexed MaxNFTsAmount, uint256 indexed time);                                                  // Event emitted when the maximum NFT withdrawal limit has been updated
 
     /**
      * @dev Initializes the Chest contract.
@@ -118,7 +118,7 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
             tokenIds[i] = _mint(nftTypeIndex, itemCode, receiptId);
         }
 
-        emit ChestOpened(msg.sender, nftTypeIndices, tokenIds, block.timestamp);
+        emit ChestOpened(msg.sender, nftTypeIndices, tokenIds, receiptIds, block.timestamp);
     }
 
     /**
@@ -189,7 +189,7 @@ contract Chest is IERC721Receiver, Pausable, Ownable {
 
         mintedNftId = NftFactory(nftFactory).mintOrb(msg.sender, _quality, _receiptId);
 
-        emit CraftOrb(msg.sender, mintedNftId, _quality, block.timestamp);
+        emit CraftOrb(msg.sender, mintedNftId, _quality, _receiptId, block.timestamp);
     }
 
     /**
