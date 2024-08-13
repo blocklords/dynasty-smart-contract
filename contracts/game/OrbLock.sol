@@ -83,6 +83,7 @@ contract OrbLock is IERC721Receiver, Pausable, Ownable {
 
         require(quality >= 4 && quality <= 6, "Invalid quality");
 
+        require(OrbNFT(orbNft).isApprovedForAll(msg.sender, address(this)), "Contract is not approved to manage the sender's NFTs");
         require(nftIds.length > 0 && nftIds.length <= 2, "The number of stake orbs is wrong");// Limit the number of NFTs staked at once
         require(playerStakes[msg.sender][stakeIndex].stakeTime == 0, "Stake index already exists"); // Ensure unique stakeIndex
 
