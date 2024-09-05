@@ -33,7 +33,7 @@ contract HeroAndMissionsManager is Pausable, Ownable {
     event RestoreHealthToHero(address indexed owner, uint256 amount, uint256 nftId, uint256 indexed time);
     event RestoreHealthToHeroes(address indexed owner, uint256 amount, uint256[] nftIds, uint256 indexed time);
     event RestoreHealthToAllHeroes(address indexed owner, uint256 amount, uint256 heroCount, uint256 indexed time);
-    event RefreshMissions(address indexed owner, uint256 amount, uint256 indexed time);
+    event RefreshCenter(address indexed owner, uint256 amount, uint256 typeId, uint256 indexed time);
     event CostLrdsForBuff(address indexed owner, uint256 amount, uint256 typeId, uint256 buffId, uint256 indexed time);
     event StakeLrdsForBuff(address indexed owner, uint256 amount, uint256 indexed time);
     event Claim(address indexed owner, uint256 amount, uint256 indexed time);
@@ -195,40 +195,42 @@ contract HeroAndMissionsManager is Pausable, Ownable {
     }
 
     /**
-     * @dev Refreshes missions for the user by consuming LRDS tokens.
-     * @param _amount The amount of LRDS tokens to be consumed.
-     * @param _deadline The timestamp until when the signature is valid.
-     * @param _v The recovery byte of the signature.
-     * @param _r Half of the ECDSA signature pair.
-     * @param _s Half of the ECDSA signature pair.
-     */
-    function refreshMissions(uint256 _amount, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant whenNotPaused {
-        require(_amount   > 0, "Amount should be greater than 0");
-        require(_deadline >= block.timestamp, "signature has expired");
+    * @dev Centralized refresh function for the user by consuming LRDS tokens.
+    * @param _amount The amount of LRDS tokens to be consumed.
+    * @param _typeId The type of action (0 for refreshing missions, 1 for refreshing buffs).
+    * @param _deadline The timestamp until when the signature is valid.
+    * @param _v The recovery byte of the signature.
+    * @param _r Half of the ECDSA signature pair.
+    * @param _s Half of the ECDSA signature pair.
+    */
+    function refreshCenter( uint256 _amount, uint256 _typeId, uint256 _deadline, uint8 _v, bytes32 _r, bytes32 _s) external nonReentrant whenNotPaused {
+        require(_amount > 0, "Amount should be greater than 0");
+        require(_deadline >= block.timestamp, "Signature has expired");
 
         IERC20 _token = IERC20(lrds);
-        
-        require(_token.balanceOf(msg.sender) >= _amount, "Not enough tokens to refresh missions");
+
+        require(_token.balanceOf(msg.sender) >= _amount, "Not enough tokens to refresh");
 
         // Verify signature
         {
-            bytes memory prefix     = "\x19Ethereum Signed Message:\n32";
-            bytes32 message = keccak256(abi.encodePacked(msg.sender, _amount, address(this), nonce[msg.sender], _deadline, block.chainid));
-            bytes32 hash    = keccak256(abi.encodePacked(prefix, message));
+            bytes memory prefix = "\x19Ethereum Signed Message:\n32";
+            bytes32 message = keccak256(abi.encodePacked(msg.sender, _amount, _typeId, address(this), nonce[msg.sender], _deadline, block.chainid));
+            bytes32 hash = keccak256(abi.encodePacked(prefix, message));
             address recover = ecrecover(hash, _v, _r, _s);
 
-            require(recover == verifier, "Verification failed for refreshing missions");
+            require(recover == verifier, "Verification failed for refresh action");
         }
 
         // Increment nonce to prevent replay attacks
         nonce[msg.sender]++;
 
-        // Transfer lrds tokens to the treasury wallet
+        // Transfer LRDS tokens to the treasury wallet
         require(_token.transferFrom(msg.sender, treasury, _amount), "Failed to transfer tokens to treasury");
-        
-        // Emit event after successful mission refresh
-        emit RefreshMissions(msg.sender, _amount, block.timestamp);
+
+        // Emit generic refresh event with typeId
+        emit RefreshCenter(msg.sender, _amount, _typeId, block.timestamp);
     }
+
 
     /**
      * @dev Allows users to consume LRDS tokens for buffs.
